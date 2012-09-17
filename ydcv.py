@@ -67,6 +67,10 @@ def print_explanation(data, print_full_web_exp=False):
         if 'explains' in d['basic']:
             for e in d['basic']['explains']:
                 _w(u"   - {0}\n".format(e))
+        else:
+            _w(u"\n")
+    else:
+        _w(u"\n")
 
     if 'web' in d:
         has_result = True
@@ -75,13 +79,12 @@ def print_explanation(data, print_full_web_exp=False):
         if print_full_web_exp:
             web = d['web']
         else:
-            web = d['web'][0:3]
+            web = d['web'][:3]
 
         for ref in web:
             _w(u"   * {0}\n".format(_c(ref['key'], 'yellow')))
-            _w(u'    ')
-            for e in ref['value']:
-                _w(u" {0};".format(_c(e, 'magenta')))
+            _w(u'     ')
+            _w(u"; ".join([_c(e, 'magenta') for e in ref['value']]))
             _w('\n')
 
     if not has_result:

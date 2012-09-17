@@ -1,5 +1,6 @@
 #!/usr/bin/env python2
 from urllib import quote
+from argparse import ArgumentParser
 import urllib2, sys, json
 
 API="YouDaoCV"
@@ -44,12 +45,16 @@ class Colorizing(object):
             return s
 
 
-def print_explanation(data):
+def print_explanation(data, print_full_web_exp=False):
     _c = Colorizing.colorize
     _w = sys.stdout.write
     d = data
 
     _w(_c(d['query'], 'underline'))
+
+    if 'basic' not in d:
+        _w(_c(' -- No result for this query.\n\n', 'red'))
+        return
 
     if 'phonetic' in d['basic']:
         _w(u" [{0}]\n".format(_c(d['basic']['phonetic'], 'yellow')))
@@ -63,18 +68,32 @@ def print_explanation(data):
     if 'web' in d:
         _w(_c(u'\nWeb Reference:\n', 'cyan'))
 
-        for ref in d['web']:
+        web = d['web'][0:3]
+        if print_full_web_exp:
+            web = d['web']
+
+        for ref in web:
             _w(u"   * {0}\n".format(_c(ref['key'], 'yellow')))
             _w(u'    ')
             for e in ref['value']:
                 _w(u" {0};".format(_c(e, 'magenta')))
             _w('\n')
 
-if len(sys.argv) < 2:
-    print "Usage:", sys.argv[0], "<words>"
-else:
-    for word in sys.argv[1:]:
+    _w('\n')
+
+if __name__ == "__main__":
+    parser = ArgumentParser(description = "Youdao Console Version")
+    parser.add_argument('-f', '--full', 
+            action="store_true",
+            default=False,
+            help="print full web reference, only the first 3 results will be printed without this flag.")
+    parser.add_argument('words', nargs='+', help="words to query")
+
+    options = parser.parse_args()
+
+    for word in options.words:
         word = quote(word)
         data = urllib2.urlopen("http://fanyi.youdao.com/openapi.do?keyfrom=%s&key=%s&type=data&doctype=json&version=1.1&q=%s" % (API, API_KEY, word)).read().decode("utf-8")
-        print_explanation(json.loads(data))
+        print_explanation(json.loads(data), print_full_web_exp=options.full)
+
 

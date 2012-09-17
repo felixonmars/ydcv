@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python2.7
 from urllib import quote
 from argparse import ArgumentParser
 import urllib2

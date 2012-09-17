@@ -55,26 +55,27 @@ def print_explanation(data, print_full_web_exp=False):
     d = data
 
     _w(_c(d['query'], 'underline'))
+    has_result = False
 
-    if 'basic' not in d:
-        _w(_c(' -- No result for this query.\n\n', 'red'))
-        return
+    if 'basic' in d:
+        has_result = True
+        if 'phonetic' in d['basic']:
+            _w(u" [{0}]\n".format(_c(d['basic']['phonetic'], 'yellow')))
+        else:
+            _w(u"\n")
 
-    if 'phonetic' in d['basic']:
-        _w(u" [{0}]\n".format(_c(d['basic']['phonetic'], 'yellow')))
-    else:
-        _w(u"\n")
-
-    if 'explains' in d['basic']:
-        for e in d['basic']['explains']:
-            _w(u"   - {0}\n".format(e))
+        if 'explains' in d['basic']:
+            for e in d['basic']['explains']:
+                _w(u"   - {0}\n".format(e))
 
     if 'web' in d:
+        has_result = True
         _w(_c(u'\nWeb Reference:\n', 'cyan'))
 
-        web = d['web'][0:3]
         if print_full_web_exp:
             web = d['web']
+        else:
+            web = d['web'][0:3]
 
         for ref in web:
             _w(u"   * {0}\n".format(_c(ref['key'], 'yellow')))
@@ -82,6 +83,9 @@ def print_explanation(data, print_full_web_exp=False):
             for e in ref['value']:
                 _w(u" {0};".format(_c(e, 'magenta')))
             _w('\n')
+
+    if not has_result:
+        _w(_c(' -- No result for this query.\n', 'red'))
 
     _w('\n')
 

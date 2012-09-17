@@ -1,9 +1,8 @@
-#!/usr/bin/env python2
-from urllib import quote
+#!/usr/bin/env python3.2
+from urllib.parse import quote
 from argparse import ArgumentParser
-import urllib2
+import requests
 import sys
-import json
 
 API = "YouDaoCV"
 API_KEY = "659600698"
@@ -43,7 +42,7 @@ class Colorizing(object):
     @classmethod
     def colorize(cls, s, color=None):
         if color in cls.colors:
-            return u"{0}{1}{2}".format(
+            return "{0}{1}{2}".format(
                 cls.colors[color], s, cls.colors['default'])
         else:
             return s
@@ -60,21 +59,21 @@ def print_explanation(data, print_full_web_exp=False):
     if 'basic' in d:
         has_result = True
         if 'phonetic' in d['basic']:
-            _w(u" [{0}]\n".format(_c(d['basic']['phonetic'], 'yellow')))
+            _w(" [{0}]\n".format(_c(d['basic']['phonetic'], 'yellow')))
         else:
-            _w(u"\n")
+            _w("\n")
 
         if 'explains' in d['basic']:
             for e in d['basic']['explains']:
-                _w(u"   - {0}\n".format(e))
+                _w("   - {0}\n".format(e))
         else:
-            _w(u"\n")
+            _w("\n")
     else:
-        _w(u"\n")
+        _w("\n")
 
     if 'web' in d:
         has_result = True
-        _w(_c(u'\nWeb Reference:\n', 'cyan'))
+        _w(_c('\nWeb Reference:\n', 'cyan'))
 
         if print_full_web_exp:
             web = d['web']
@@ -82,9 +81,9 @@ def print_explanation(data, print_full_web_exp=False):
             web = d['web'][:3]
 
         for ref in web:
-            _w(u"   * {0}\n".format(_c(ref['key'], 'yellow')))
-            _w(u'     ')
-            _w(u"; ".join([_c(e, 'magenta') for e in ref['value']]))
+            _w("   * {0}\n".format(_c(ref['key'], 'yellow')))
+            _w('     ')
+            _w("; ".join([_c(e, 'magenta') for e in ref['value']]))
             _w('\n')
 
     if not has_result:
@@ -105,9 +104,5 @@ if __name__ == "__main__":
 
     for word in options.words:
         word = quote(word)
-        data = urllib2.urlopen(
-            "http://fanyi.youdao.com/openapi.do?"
-            "keyfrom=%s&key=%s&type=data&doctype=json"
-            "&version=1.1&q=%s"
-            % (API, API_KEY, word)).read().decode("utf-8")
-        print_explanation(json.loads(data), print_full_web_exp=options.full)
+        r = requests.get("http://fanyi.youdao.com/openapi.do?keyfrom="+API+"&key="+API_KEY+"&type=data&doctype=json"+"&version=1.1&q="+word)
+        print_explanation(r.json, print_full_web_exp=options.full)

@@ -52,34 +52,42 @@ class Colorizing(object):
 def print_explanation(data, print_full_web_exp=False):
     _c = Colorizing.colorize
     _w = sys.stdout.write
-    d = data
+    _d = data
 
-    _w(_c(d['query'], 'underline'))
+    _w(_c(_d['query'], 'underline'))
     has_result = False
 
-    if 'basic' in d:
+    if 'basic' in _d:
         has_result = True
-        if 'phonetic' in d['basic']:
-            _w(u" [{0}]\n".format(_c(d['basic']['phonetic'], 'yellow')))
+        basic = _d['basic']
+        if 'phonetic' in basic:
+            _w(u" [{0}]\n".format(_c(basic['phonetic'], 'yellow')))
         else:
             _w(u"\n")
 
-        if 'explains' in d['basic']:
-            for e in d['basic']['explains']:
-                _w(u"   - {0}\n".format(e))
+        _w(_c(u'Word Explanation:\n', 'cyan'))
+        if 'explains' in basic:
+            for e in basic['explains']:
+                _w(u"   * {0}\n".format(e))
         else:
             _w(u"\n")
     else:
         _w(u"\n")
 
-    if 'web' in d:
+    if 'translation' in _d:
+        has_result = True
+        _w(_c(u'\nTranslation:\n', 'cyan'))
+        for t in _d['translation']:
+            _w(u"   * {0}\n".format(t))
+
+    if 'web' in _d:
         has_result = True
         _w(_c(u'\nWeb Reference:\n', 'cyan'))
 
         if print_full_web_exp:
-            web = d['web']
+            web = _d['web']
         else:
-            web = d['web'][:3]
+            web = _d['web'][:3]
 
         for ref in web:
             _w(u"   * {0}\n".format(_c(ref['key'], 'yellow')))
@@ -99,7 +107,8 @@ if __name__ == "__main__":
                         default=False,
                         help="print full web reference, only the first 3 "
                              "results will be printed without this flag.")
-    parser.add_argument('words', nargs='+', help="words to query")
+    parser.add_argument('words', nargs='+', help=
+                        "words to lookup, or quoted sentences to translate.")
 
     options = parser.parse_args()
 

@@ -4,6 +4,7 @@ from argparse import ArgumentParser
 import urllib2
 import sys
 import json
+import re
 
 API = "YouDaoCV"
 API_KEY = "659600698"
@@ -49,13 +50,30 @@ class Colorizing(object):
             return s
 
 
+def online_resources(query):
+
+    english = re.compile(r'^[a-z]+$')
+    chinese = re.compile(ur'^[\u4e00-\u9fff]+$', re.UNICODE)
+
+    res_list = [
+        (english, 'http://www.ldoceonline.com/search/?q={0}'),
+        (english, 'http://dictionary.reference.com/browse/{0}'),
+        (english, 'http://www.urbandictionary.com/define.php?term={0}'),
+        (chinese, 'http://www.zdic.net/sousuo/?q={0}')
+    ]
+
+    return [url.format(quote(query.encode('utf-8')))
+            for lang, url in res_list if lang.match(query) is not None]
+
+
 def print_explanation(data, print_full_web_exp=False):
     _c = Colorizing.colorize
     _w = sys.stdout.write
     _d = data
-
-    _w(_c(_d['query'], 'underline'))
     has_result = False
+
+    query = _d['query']
+    _w(_c(query, 'underline'))
 
     if 'basic' in _d:
         has_result = True
@@ -65,24 +83,24 @@ def print_explanation(data, print_full_web_exp=False):
         else:
             _w(u"\n")
 
-        _w(_c(u'Word Explanation:\n', 'cyan'))
+        _w(_c(u'  Word Explanation:\n', 'cyan'))
         if 'explains' in basic:
             for e in basic['explains']:
-                _w(u"   * {0}\n".format(e))
+                _w(u"     * {0}\n".format(e))
         else:
             _w(u"\n")
+
+    elif 'translation' in _d:
+        has_result = True
+        _w(_c(u'\n  Translation:\n', 'cyan'))
+        for t in _d['translation']:
+            _w(u"     * {0}\n".format(t))
     else:
         _w(u"\n")
 
-    if 'translation' in _d:
-        has_result = True
-        _w(_c(u'\nTranslation:\n', 'cyan'))
-        for t in _d['translation']:
-            _w(u"   * {0}\n".format(t))
-
     if 'web' in _d:
         has_result = True
-        _w(_c(u'\nWeb Reference:\n', 'cyan'))
+        _w(_c(u'\n  Web Reference:\n', 'cyan'))
 
         if print_full_web_exp:
             web = _d['web']
@@ -90,14 +108,18 @@ def print_explanation(data, print_full_web_exp=False):
             web = _d['web'][:3]
 
         for ref in web:
-            _w(u"   * {0}\n".format(_c(ref['key'], 'yellow')))
-            _w(u'     ')
+            _w(u"     * {0}\n".format(_c(ref['key'], 'yellow')))
+            _w(u'       ')
             _w(u"; ".join([_c(e, 'magenta') for e in ref['value']]))
             _w('\n')
 
     if not has_result:
         _w(_c(' -- No result for this query.\n', 'red'))
 
+    ol_res = online_resources(query)
+    if len(ol_res) > 0:
+        _w(_c(u'\n  Online Resource:\n', 'cyan'))
+        map(lambda u: _w('     * {0}\n'.format(u)), ol_res)
     _w('\n')
 
 if __name__ == "__main__":

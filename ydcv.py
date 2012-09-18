@@ -102,16 +102,11 @@ def print_explanation(data, print_full_web_exp=False):
         has_result = True
         _w(_c(u'\n  Web Reference:\n', 'cyan'))
 
-        if print_full_web_exp:
-            web = _d['web']
-        else:
-            web = _d['web'][:3]
-
+        web = _d['web'] if print_full_web_exp else _d['web'][:3]
         for ref in web:
-            _w(u"     * {0}\n".format(_c(ref['key'], 'yellow')))
-            _w(u'       ')
-            _w(u"; ".join([_c(e, 'magenta') for e in ref['value']]))
-            _w('\n')
+            _w(u'     * {0}\n'.format(_c(ref['key'], 'yellow')))
+            _w(u'       {0}\n'.format(
+                u"; ".join([_c(e, 'magenta') for e in ref['value']])))
 
     if not has_result:
         _w(_c(' -- No result for this query.\n', 'red'))
@@ -119,7 +114,9 @@ def print_explanation(data, print_full_web_exp=False):
     ol_res = online_resources(query)
     if len(ol_res) > 0:
         _w(_c(u'\n  Online Resource:\n', 'cyan'))
-        map(lambda u: _w('     * {0}\n'.format(u)), ol_res)
+        res = ol_res if print_full_web_exp else ol_res[:1]
+        map(lambda u: _w('     * {0}\n'.format(u)), res)
+
     _w('\n')
 
 if __name__ == "__main__":

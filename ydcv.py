@@ -52,7 +52,7 @@ class Colorizing(object):
 
 def online_resources(query):
 
-    english = re.compile(r'^[a-z]+$')
+    english = re.compile(r'^[a-z]+$', re.IGNORECASE)
     chinese = re.compile(ur'^[\u4e00-\u9fff]+$', re.UNICODE)
 
     res_list = [

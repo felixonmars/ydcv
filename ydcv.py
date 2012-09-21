@@ -61,8 +61,8 @@ class Colorizing(object):
 
 def online_resources(query):
 
-    english = re.compile(r'^[a-z]+$', re.IGNORECASE)
-    chinese = re.compile(r'^[\u4e00-\u9fff]+$', re.UNICODE)
+    english = re.compile('^[a-z]+$', re.IGNORECASE)
+    chinese = re.compile('^[\u4e00-\u9fff]+$', re.UNICODE)
 
     res_list = [
         (english, 'http://www.ldoceonline.com/search/?q={0}'),
@@ -111,10 +111,9 @@ def print_explanation(data, options):
         print(_c('\n  Web Reference:', 'cyan'))
 
         web = _d['web'] if options.full else _d['web'][:3]
-        for ref in web:
-            print('     *', _c(ref['key'], 'yellow'))
-            print('       ', end='')
-            print(*map(_c('{0}', 'magenta').format, ref['value']), sep='; ')
+        print(*['     * ' + _c(ref['key'], 'yellow') +
+            '\n       ' + '; '.join(map(_c('{0}', 'magenta').format, ref['value']))
+            for ref in web], sep='\n')
 
     if not has_result:
         print(_c(' -- No result for this query.', 'red'))
@@ -123,7 +122,7 @@ def print_explanation(data, options):
     if len(ol_res) > 0:
         print(_c('\n  Online Resource:', 'cyan'))
         res = ol_res if options.full else ol_res[:1]
-        print(*map('     * {0}'.format, res))
+        print(*map(('     * ' + _c('{0}', 'underline')).format, res), sep='\n')
 
     print()
 

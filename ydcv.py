@@ -1,10 +1,19 @@
 #!/usr/bin/env python2.7
-from urllib import quote
+from __future__ import unicode_literals
+from __future__ import print_function
 from argparse import ArgumentParser
-import urllib2
-import sys
 import json
 import re
+
+try:
+    #Py3
+    from urllib.parse import quote
+    from urllib.request import urlopen
+except ImportError:
+    #Py 2.7
+    from urllib import quote
+    from urllib2 import urlopen
+
 
 API = "YouDaoCV"
 API_KEY = "659600698"
@@ -44,7 +53,7 @@ class Colorizing(object):
     @classmethod
     def colorize(cls, s, color=None):
         if color in cls.colors:
-            return u"{0}{1}{2}".format(
+            return "{0}{1}{2}".format(
                 cls.colors[color], s, cls.colors['default'])
         else:
             return s
@@ -53,7 +62,7 @@ class Colorizing(object):
 def online_resources(query):
 
     english = re.compile(r'^[a-z]+$', re.IGNORECASE)
-    chinese = re.compile(ur'^[\u4e00-\u9fff]+$', re.UNICODE)
+    chinese = re.compile(r'^[\u4e00-\u9fff]+$', re.UNICODE)
 
     res_list = [
         (english, 'http://www.ldoceonline.com/search/?q={0}'),
@@ -66,58 +75,57 @@ def online_resources(query):
             for lang, url in res_list if lang.match(query) is not None]
 
 
-def print_explanation(data, print_full_web_exp=False):
+def print_explanation(data, options):
     _c = Colorizing.colorize
-    _w = sys.stdout.write
     _d = data
     has_result = False
 
     query = _d['query']
-    _w(_c(query, 'underline'))
+    print(_c(query, 'underline'), end='')
 
     if 'basic' in _d:
         has_result = True
-        basic = _d['basic']
-        if 'phonetic' in basic:
-            _w(u" [{0}]\n".format(_c(basic['phonetic'], 'yellow')))
-        else:
-            _w(u"\n")
+        _b = _d['basic']
 
-        _w(_c(u'  Word Explanation:\n', 'cyan'))
-        if 'explains' in basic:
-            for e in basic['explains']:
-                _w(u"     * {0}\n".format(e))
+        if 'phonetic' in _b:
+            print(" [{0}]".format(_c(_b['phonetic'], 'yellow')))
         else:
-            _w(u"\n")
+            print()
+
+        if 'explains' in _b:
+            print(_c('  Word Explanation:', 'cyan'))
+            print(*map("     * {0}".format, _b['explains']), sep='\n')
+        else:
+            print()
 
     elif 'translation' in _d:
         has_result = True
-        _w(_c(u'\n  Translation:\n', 'cyan'))
-        for t in _d['translation']:
-            _w(u"     * {0}\n".format(t))
+        print(_c('\n  Translation:', 'cyan'))
+        print(*map("     * {0}".format, _d['translation']), sep='\n')
+
     else:
-        _w(u"\n")
+        print()
 
     if 'web' in _d:
         has_result = True
-        _w(_c(u'\n  Web Reference:\n', 'cyan'))
+        print(_c('\n  Web Reference:', 'cyan'))
 
-        web = _d['web'] if print_full_web_exp else _d['web'][:3]
+        web = _d['web'] if options.full else _d['web'][:3]
         for ref in web:
-            _w(u'     * {0}\n'.format(_c(ref['key'], 'yellow')))
-            _w(u'       {0}\n'.format(
-                u"; ".join([_c(e, 'magenta') for e in ref['value']])))
+            print('     *', _c(ref['key'], 'yellow'))
+            print('       ', end='')
+            print(*map(_c('{0}', 'magenta').format, ref['value']), sep='; ')
 
     if not has_result:
-        _w(_c(' -- No result for this query.\n', 'red'))
+        print(_c(' -- No result for this query.', 'red'))
 
     ol_res = online_resources(query)
     if len(ol_res) > 0:
-        _w(_c(u'\n  Online Resource:\n', 'cyan'))
-        res = ol_res if print_full_web_exp else ol_res[:1]
-        map(lambda u: _w('     * {0}\n'.format(u)), res)
+        print(_c('\n  Online Resource:', 'cyan'))
+        res = ol_res if options.full else ol_res[:1]
+        print(*map('     * {0}'.format, res))
 
-    _w('\n')
+    print()
 
 if __name__ == "__main__":
     parser = ArgumentParser(description="Youdao Console Version")
@@ -133,9 +141,8 @@ if __name__ == "__main__":
 
     for word in options.words:
         word = quote(word)
-        data = urllib2.urlopen(
-            "http://fanyi.youdao.com/openapi.do?"
-            "keyfrom=%s&key=%s&type=data&doctype=json"
-            "&version=1.1&q=%s"
-            % (API, API_KEY, word)).read().decode("utf-8")
-        print_explanation(json.loads(data), print_full_web_exp=options.full)
+        data = urlopen(
+            "http://fanyi.youdao.com/openapi.do?keyfrom={0}&"
+            "key={1}&type=data&doctype=json&version=1.1&q={2}"
+            .format(API, API_KEY, word)).read().decode("utf-8")
+        print_explanation(json.loads(data), options)

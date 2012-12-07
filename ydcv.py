@@ -105,26 +105,26 @@ def print_explanation(data, options):
 
     else:
         print()
+    if options.simple == False:
+        if 'web' in _d:
+            has_result = True
+            print(_c('\n  Web Reference:', 'cyan'))
 
-    if 'web' in _d:
-        has_result = True
-        print(_c('\n  Web Reference:', 'cyan'))
+            web = _d['web'] if options.full else _d['web'][:3]
+            print(*['     * ' + _c(ref['key'], 'yellow') +
+                '\n       ' + '; '.join(map(_c('{0}', 'magenta').format, ref['value']))
+                for ref in web], sep='\n')
 
-        web = _d['web'] if options.full else _d['web'][:3]
-        print(*['     * ' + _c(ref['key'], 'yellow') +
-            '\n       ' + '; '.join(map(_c('{0}', 'magenta').format, ref['value']))
-            for ref in web], sep='\n')
+        if not has_result:
+            print(_c(' -- No result for this query.', 'red'))
 
-    if not has_result:
-        print(_c(' -- No result for this query.', 'red'))
+        ol_res = online_resources(query)
+        if len(ol_res) > 0:
+            print(_c('\n  Online Resource:', 'cyan'))
+            res = ol_res if options.full else ol_res[:1]
+            print(*map(('     * ' + _c('{0}', 'underline')).format, res), sep='\n')
 
-    ol_res = online_resources(query)
-    if len(ol_res) > 0:
-        print(_c('\n  Online Resource:', 'cyan'))
-        res = ol_res if options.full else ol_res[:1]
-        print(*map(('     * ' + _c('{0}', 'underline')).format, res), sep='\n')
-
-    print()
+        print()
 
 if __name__ == "__main__":
     parser = ArgumentParser(description="Youdao Console Version")
@@ -133,6 +133,11 @@ if __name__ == "__main__":
                         default=False,
                         help="print full web reference, only the first 3 "
                              "results will be printed without this flag.")
+    parser.add_argument('-s','--simple',
+                        action="store_true",
+                        default=False,
+                        help="only show explainations. "
+                            "argument \"-f\" will not take effect")
     parser.add_argument('words', nargs='+', help=
                         "words to lookup, or quoted sentences to translate.")
 

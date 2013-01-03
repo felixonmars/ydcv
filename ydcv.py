@@ -4,6 +4,7 @@ from __future__ import print_function
 from argparse import ArgumentParser
 import json
 import re
+import sys
 
 try:
     #Py3
@@ -13,6 +14,8 @@ except ImportError:
     #Py 2.7
     from urllib import quote
     from urllib2 import urlopen
+    reload(sys)
+    sys.setdefaultencoding('utf8')
 
 
 API = "YouDaoCV"
@@ -52,6 +55,10 @@ class Colorizing(object):
 
     @classmethod
     def colorize(cls, s, color=None):
+        if options.color == 'never':
+            return s
+        if options.color == 'auto' and not sys.stdout.isatty():
+            return s
         if color in cls.colors:
             return "{0}{1}{2}".format(
                 cls.colors[color], s, cls.colors['default'])
@@ -138,6 +145,11 @@ if __name__ == "__main__":
                         default=False,
                         help="only show explainations. "
                             "argument \"-f\" will not take effect")
+    parser.add_argument('--color',
+                        choices=['always', 'auto', 'never'],
+                        default='auto',
+                        help="colorize the output. "
+                             "Default to 'auto' or can be 'never' or 'always'.")
     parser.add_argument('words', nargs='+', help=
                         "words to lookup, or quoted sentences to translate.")
 

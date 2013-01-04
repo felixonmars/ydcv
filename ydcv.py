@@ -109,29 +109,34 @@ def print_explanation(data, options):
         has_result = True
         print(_c('\n  Translation:', 'cyan'))
         print(*map("     * {0}".format, _d['translation']), sep='\n')
-
     else:
         print()
-    if options.simple == False:
+
+    if options.simple is False:
+
+        #web reference
         if 'web' in _d:
             has_result = True
             print(_c('\n  Web Reference:', 'cyan'))
 
             web = _d['web'] if options.full else _d['web'][:3]
-            print(*['     * ' + _c(ref['key'], 'yellow') +
-                '\n       ' + '; '.join(map(_c('{0}', 'magenta').format, ref['value']))
-                for ref in web], sep='\n')
+            print(*[
+                '     * {0}\n       {1}'.format(
+                    _c(ref['key'], 'yellow'),
+                    '; '.join(map(_c('{0}', 'magenta').format, ref['value']))
+                ) for ref in web], sep='\n')
 
-        if not has_result:
-            print(_c(' -- No result for this query.', 'red'))
-
+        # Online resources
         ol_res = online_resources(query)
         if len(ol_res) > 0:
             print(_c('\n  Online Resource:', 'cyan'))
             res = ol_res if options.full else ol_res[:1]
             print(*map(('     * ' + _c('{0}', 'underline')).format, res), sep='\n')
 
-        print()
+    if not has_result:
+        print(_c(' -- No result for this query.', 'red'))
+
+    print()
 
 if __name__ == "__main__":
     parser = ArgumentParser(description="Youdao Console Version")

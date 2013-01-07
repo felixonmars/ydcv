@@ -4,6 +4,7 @@ from __future__ import print_function
 from argparse import ArgumentParser
 import json
 import re
+import sys
 
 try:
     #Py3
@@ -13,6 +14,8 @@ except ImportError:
     #Py 2.7
     from urllib import quote
     from urllib2 import urlopen
+    reload(sys)
+    sys.setdefaultencoding('utf8')
 
 
 API = "YouDaoCV"
@@ -52,6 +55,10 @@ class Colorizing(object):
 
     @classmethod
     def colorize(cls, s, color=None):
+        if options.color == 'never':
+            return s
+        if options.color == 'auto' and not sys.stdout.isatty():
+            return s
         if color in cls.colors:
             return "{0}{1}{2}".format(
                 cls.colors[color], s, cls.colors['default'])
@@ -102,29 +109,34 @@ def print_explanation(data, options):
         has_result = True
         print(_c('\n  Translation:', 'cyan'))
         print(*map("     * {0}".format, _d['translation']), sep='\n')
-
     else:
         print()
-    if options.simple == False:
+
+    if options.simple is False:
+
+        #web reference
         if 'web' in _d:
             has_result = True
             print(_c('\n  Web Reference:', 'cyan'))
 
             web = _d['web'] if options.full else _d['web'][:3]
-            print(*['     * ' + _c(ref['key'], 'yellow') +
-                '\n       ' + '; '.join(map(_c('{0}', 'magenta').format, ref['value']))
-                for ref in web], sep='\n')
+            print(*[
+                '     * {0}\n       {1}'.format(
+                    _c(ref['key'], 'yellow'),
+                    '; '.join(map(_c('{0}', 'magenta').format, ref['value']))
+                ) for ref in web], sep='\n')
 
-        if not has_result:
-            print(_c(' -- No result for this query.', 'red'))
-
+        # Online resources
         ol_res = online_resources(query)
         if len(ol_res) > 0:
             print(_c('\n  Online Resource:', 'cyan'))
             res = ol_res if options.full else ol_res[:1]
             print(*map(('     * ' + _c('{0}', 'underline')).format, res), sep='\n')
 
-        print()
+    if not has_result:
+        print(_c(' -- No result for this query.', 'red'))
+
+    print()
 
 if __name__ == "__main__":
     parser = ArgumentParser(description="Youdao Console Version")
@@ -138,6 +150,11 @@ if __name__ == "__main__":
                         default=False,
                         help="only show explainations. "
                             "argument \"-f\" will not take effect")
+    parser.add_argument('--color',
+                        choices=['always', 'auto', 'never'],
+                        default='auto',
+                        help="colorize the output. "
+                             "Default to 'auto' or can be 'never' or 'always'.")
     parser.add_argument('words', nargs='+', help=
                         "words to lookup, or quoted sentences to translate.")
 

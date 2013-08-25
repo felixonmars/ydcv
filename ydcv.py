@@ -155,11 +155,11 @@ if __name__ == "__main__":
                         default=False,
                         help="print full web reference, only the first 3 "
                              "results will be printed without this flag.")
-    parser.add_argument('-s','--simple',
+    parser.add_argument('-s', '--simple',
                         action="store_true",
                         default=False,
                         help="only show explainations. "
-                            "argument \"-f\" will not take effect")
+                             "argument \"-f\" will not take effect")
     parser.add_argument('--color',
                         choices=['always', 'auto', 'never'],
                         default='auto',
@@ -179,7 +179,7 @@ if __name__ == "__main__":
                 if sys.version_info[0] == 3:
                     words = input('> ')
                 else:
-                    words= raw_input('> ')
+                    words = raw_input('> ')
             except (KeyboardInterrupt, EOFError):
                 break
             else:

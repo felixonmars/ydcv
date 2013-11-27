@@ -138,6 +138,16 @@ def print_explanation(data, options):
 
     print()
 
+
+def lookup_word(word):
+    word = quote(word)
+    data = urlopen(
+        "http://fanyi.youdao.com/openapi.do?keyfrom={0}&"
+        "key={1}&type=data&doctype=json&version=1.1&q={2}"
+        .format(API, API_KEY, word)).read().decode("utf-8")
+    print_explanation(json.loads(data), options)
+
+
 if __name__ == "__main__":
     parser = ArgumentParser(description="Youdao Console Version")
     parser.add_argument('-f', '--full',
@@ -145,25 +155,37 @@ if __name__ == "__main__":
                         default=False,
                         help="print full web reference, only the first 3 "
                              "results will be printed without this flag.")
-    parser.add_argument('-s','--simple',
+    parser.add_argument('-s', '--simple',
                         action="store_true",
                         default=False,
                         help="only show explainations. "
-                            "argument \"-f\" will not take effect")
+                             "argument \"-f\" will not take effect")
     parser.add_argument('--color',
                         choices=['always', 'auto', 'never'],
                         default='auto',
                         help="colorize the output. "
                              "Default to 'auto' or can be 'never' or 'always'.")
-    parser.add_argument('words', nargs='+', help=
+    parser.add_argument('words', nargs='*', help=
                         "words to lookup, or quoted sentences to translate.")
 
     options = parser.parse_args()
 
-    for word in options.words:
-        word = quote(word)
-        data = urlopen(
-            "http://fanyi.youdao.com/openapi.do?keyfrom={0}&"
-            "key={1}&type=data&doctype=json&version=1.1&q={2}"
-            .format(API, API_KEY, word)).read().decode("utf-8")
-        print_explanation(json.loads(data), options)
+    if options.words:
+        for word in options.words:
+            lookup_word(word)
+    else:
+        while True:
+            try:
+                if sys.version_info[0] == 3:
+                    words = input('> ')
+                else:
+                    words = raw_input('> ')
+            except (KeyboardInterrupt, EOFError):
+                break
+            else:
+                if re.match(r'''"[a-zA-Z ,:."!?']+"''', words):
+                    lookup_word(words.strip('"'))
+                else:
+                    for word in words.split():
+                        lookup_word(word)
+        print('Bye')

@@ -183,9 +183,5 @@ if __name__ == "__main__":
             except (KeyboardInterrupt, EOFError):
                 break
             else:
-                if re.match(r'''"[a-zA-Z ,:."!?']+"''', words):
-                    lookup_word(words.strip('"'))
-                else:
-                    for word in words.split():
-                        lookup_word(word)
+                lookup_word(words)
         print('Bye')

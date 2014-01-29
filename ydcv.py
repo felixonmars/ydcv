@@ -183,5 +183,6 @@ if __name__ == "__main__":
             except (KeyboardInterrupt, EOFError):
                 break
             else:
-                lookup_word(words)
+                if words.strip():
+                    lookup_word(words)
         print('Bye')

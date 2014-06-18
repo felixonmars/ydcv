@@ -2,6 +2,8 @@
 from __future__ import unicode_literals
 from __future__ import print_function
 from argparse import ArgumentParser
+from subprocess import check_output
+from time import sleep
 import json
 import re
 import sys
@@ -160,6 +162,10 @@ if __name__ == "__main__":
                         default=False,
                         help="only show explainations. "
                              "argument \"-f\" will not take effect")
+    parser.add_argument('-x', '--selection',
+                        action="store_true",
+                        default=False,
+                        help="show explaination of current selection. ")
     parser.add_argument('--color',
                         choices=['always', 'auto', 'never'],
                         default='auto',
@@ -174,15 +180,30 @@ if __name__ == "__main__":
         for word in options.words:
             lookup_word(word)
     else:
-        while True:
-            try:
-                if sys.version_info[0] == 3:
-                    words = input('> ')
+        if options.selection:
+            last=check_output(["xclip", "-o"], universal_newlines=True)
+            print("Waiting for selection>")
+            while True:
+                try:
+                    sleep(0.1)
+                    curr=check_output(["xclip", "-o"], universal_newlines=True)
+                    if curr!=last:
+                      last=curr
+                      if last.strip():
+                          lookup_word(last)
+                      print("Waiting for selection>")
+                except (KeyboardInterrupt, EOFError):
+                    break
+        else:
+            while True:
+                try:
+                    if sys.version_info[0] == 3:
+                        words = input('> ')
+                    else:
+                        words = raw_input('> ')
+                except (KeyboardInterrupt, EOFError):
+                    break
                 else:
-                    words = raw_input('> ')
-            except (KeyboardInterrupt, EOFError):
-                break
-            else:
-                if words.strip():
-                    lookup_word(words)
-        print('Bye')
+                    if words.strip():
+                        lookup_word(words)
+        print("\nBye")

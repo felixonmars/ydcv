@@ -195,15 +195,21 @@ if __name__ == "__main__":
                 except (KeyboardInterrupt, EOFError):
                     break
         else:
+            try:
+                import readline
+            except ImportError:
+                pass
             while True:
                 try:
                     if sys.version_info[0] == 3:
                         words = input('> ')
                     else:
                         words = raw_input('> ')
-                except (KeyboardInterrupt, EOFError):
-                    break
-                else:
                     if words.strip():
                         lookup_word(words)
+                except KeyboardInterrupt:
+                    print()
+                    continue
+                except EOFError:
+                    break
         print("\nBye")

@@ -195,6 +195,10 @@ if __name__ == "__main__":
                 except (KeyboardInterrupt, EOFError):
                     break
         else:
+            try:
+                import readline
+            except ImportError:
+                pass
             while True:
                 try:
                     if sys.version_info[0] == 3:

@@ -205,9 +205,11 @@ if __name__ == "__main__":
                         words = input('> ')
                     else:
                         words = raw_input('> ')
-                except (KeyboardInterrupt, EOFError):
-                    break
-                else:
                     if words.strip():
                         lookup_word(words)
+                except KeyboardInterrupt:
+                    print()
+                    continue
+                except EOFError:
+                    break
         print("\nBye")

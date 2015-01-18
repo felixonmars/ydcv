@@ -143,11 +143,15 @@ def print_explanation(data, options):
 
 def lookup_word(word):
     word = quote(word)
-    data = urlopen(
-        "http://fanyi.youdao.com/openapi.do?keyfrom={0}&"
-        "key={1}&type=data&doctype=json&version=1.1&q={2}"
-        .format(API, API_KEY, word)).read().decode("utf-8")
-    print_explanation(json.loads(data), options)
+    try:
+        data = urlopen(
+            "http://fanyi.youdao.com/openapi.do?keyfrom={0}&"
+            "key={1}&type=data&doctype=json&version=1.1&q={2}"
+            .format(API, API_KEY, word)).read().decode("utf-8")
+    except IOError:
+        print("Network is unavailable")
+    else:
+        print_explanation(json.loads(data), options)
 
 
 if __name__ == "__main__":

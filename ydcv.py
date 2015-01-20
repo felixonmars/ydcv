@@ -96,7 +96,10 @@ def print_explanation(data, options):
         has_result = True
         _b = _d['basic']
 
-        if 'phonetic' in _b:
+        if 'uk-phonetic' in _b and 'us-phonetic' in _b:
+            print(" UK: [{0}]".format(_c(_b['uk-phonetic'], 'yellow')), end=',')
+            print(" US: [{0}]".format(_c(_b['us-phonetic'], 'yellow')))
+        elif 'phonetic' in _b:
             print(" [{0}]".format(_c(_b['phonetic'], 'yellow')))
         else:
             print()

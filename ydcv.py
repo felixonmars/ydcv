@@ -9,13 +9,20 @@ import re
 import sys
 
 try:
+    from bs4 import BeautifulSoup
+except ImportError:
+    from BeautifulSoup import BeautifulSoup
+
+try:
     #Py3
     from urllib.parse import quote
     from urllib.request import urlopen
+    from html.parser import HTMLParser
 except ImportError:
     #Py 2.7
     from urllib import quote
     from urllib2 import urlopen
+    from HTMLParser import HTMLParser
     reload(sys)
     sys.setdefaultencoding('utf8')
 
@@ -84,7 +91,7 @@ def online_resources(query):
             for lang, url in res_list if lang.match(query) is not None]
 
 
-def print_explanation(data, options):
+def print_explanation(data, data_m, options):
     _c = Colorizing.colorize
     _d = data
     has_result = False
@@ -131,6 +138,15 @@ def print_explanation(data, options):
                     '; '.join(map(_c('{0}', 'magenta').format, ref['value']))
                 ) for ref in web], sep='\n')
 
+        # Example sentences
+        eps = parse_ep(data_m)
+        if len(eps) > 0:
+            print(_c('\n  Examples:', 'cyan'))
+            print(*[
+                '     * {0}\n       {1}'.format(
+                    _c(ep[0][2:], 'yellow'), _c(ep[1], 'magenta')
+                ) for ep in eps], sep='\n')
+
         # Online resources
         ol_res = online_resources(query)
         if len(ol_res) > 0:
@@ -143,6 +159,17 @@ def print_explanation(data, options):
 
     print()
 
+def parse_ep(data_m):
+    hp = HTMLParser()
+    listtrans = BeautifulSoup(data_m).findAll(id="listtrans")
+    resps = []
+    if len(listtrans) >= 2:
+        for li in listtrans[1].findAll(name='li'):
+            resps.append([
+                "".join([hp.unescape(i.string) for i in li.contents[:-2]]),
+                hp.unescape(li.contents[-1].contents[0].string)
+            ])
+    return resps
 
 def lookup_word(word):
     word = quote(word)
@@ -151,10 +178,13 @@ def lookup_word(word):
             "http://fanyi.youdao.com/openapi.do?keyfrom={0}&"
             "key={1}&type=data&doctype=json&version=1.1&q={2}"
             .format(API, API_KEY, word)).read().decode("utf-8")
+        data_m = urlopen(
+            "http://dict.youdao.com/m/{0}/".format(word)
+            ).read().decode("utf-8")
     except IOError:
         print("Network is unavailable")
     else:
-        print_explanation(json.loads(data), options)
+        print_explanation(json.loads(data), data_m, options)
 
 
 if __name__ == "__main__":

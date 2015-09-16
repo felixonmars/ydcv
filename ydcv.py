@@ -9,11 +9,11 @@ import re
 import sys
 
 try:
-    #Py3
+    # Py3
     from urllib.parse import quote
     from urllib.request import urlopen
 except ImportError:
-    #Py 2.7
+    # Py 2.7
     from urllib import quote
     from urllib2 import urlopen
     reload(sys)
@@ -104,6 +104,15 @@ def print_explanation(data, options):
         else:
             print()
 
+        if options.speech and 'speech' in _b:
+            print(_c('  Text to Speech:', 'cyan'))
+            if 'us-speech' in _b and 'uk-speech' in _b:
+                print("     * UK:", _b['uk-speech'])
+                print("     * US:", _b['us-speech'])
+            elif 'speech' in _b:
+                print("     *", _b['speech'])
+            print()
+
         if 'explains' in _b:
             print(_c('  Word Explanation:', 'cyan'))
             print(*map("     * {0}".format, _b['explains']), sep='\n')
@@ -118,8 +127,7 @@ def print_explanation(data, options):
         print()
 
     if options.simple is False:
-
-        #web reference
+        # Web reference
         if 'web' in _d:
             has_result = True
             print(_c('\n  Web Reference:', 'cyan'))
@@ -149,7 +157,7 @@ def lookup_word(word):
     try:
         data = urlopen(
             "http://fanyi.youdao.com/openapi.do?keyfrom={0}&"
-            "key={1}&type=data&doctype=json&version=1.1&q={2}"
+            "key={1}&type=data&doctype=json&version=1.2&q={2}"
             .format(API, API_KEY, word)).read().decode("utf-8")
     except IOError:
         print("Network is unavailable")
@@ -168,18 +176,23 @@ if __name__ == "__main__":
                         action="store_true",
                         default=False,
                         help="only show explainations. "
-                             "argument \"-f\" will not take effect")
+                             "argument \"-f\" will not take effect.")
+    parser.add_argument('-S', '--speech',
+                        action="store_true",
+                        default=False,
+                        help="print URL to speech audio.")
     parser.add_argument('-x', '--selection',
                         action="store_true",
                         default=False,
-                        help="show explaination of current selection. ")
+                        help="show explaination of current selection.")
     parser.add_argument('--color',
                         choices=['always', 'auto', 'never'],
                         default='auto',
                         help="colorize the output. "
                              "Default to 'auto' or can be 'never' or 'always'.")
-    parser.add_argument('words', nargs='*', help=
-                        "words to lookup, or quoted sentences to translate.")
+    parser.add_argument('words',
+                        nargs='*',
+                        help="words to lookup, or quoted sentences to translate.")
 
     options = parser.parse_args()
 
@@ -188,17 +201,17 @@ if __name__ == "__main__":
             lookup_word(word)
     else:
         if options.selection:
-            last=check_output(["xclip", "-o"], universal_newlines=True)
+            last = check_output(["xclip", "-o"], universal_newlines=True)
             print("Waiting for selection>")
             while True:
                 try:
                     sleep(0.1)
-                    curr=check_output(["xclip", "-o"], universal_newlines=True)
-                    if curr!=last:
-                      last=curr
-                      if last.strip():
-                          lookup_word(last)
-                      print("Waiting for selection>")
+                    curr = check_output(["xclip", "-o"], universal_newlines=True)
+                    if curr != last:
+                        last = curr
+                        if last.strip():
+                            lookup_word(last)
+                        print("Waiting for selection>")
                 except (KeyboardInterrupt, EOFError):
                     break
         else:

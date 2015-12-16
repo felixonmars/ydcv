@@ -3,10 +3,12 @@ from __future__ import unicode_literals
 from __future__ import print_function
 from argparse import ArgumentParser
 from subprocess import check_output
+from subprocess import call
 from time import sleep
 import json
 import re
 import sys
+import platform
 
 try:
     # Py3
@@ -112,17 +114,20 @@ def print_explanation(data, options):
             elif 'speech' in _b:
                 print("     *", _b['speech'])
             print()
-
         if 'explains' in _b:
             print(_c('  Word Explanation:', 'cyan'))
             print(*map("     * {0}".format, _b['explains']), sep='\n')
         else:
             print()
-
     elif 'translation' in _d:
         has_result = True
         print(_c('\n  Translation:', 'cyan'))
         print(*map("     * {0}".format, _d['translation']), sep='\n')
+        # read out the word
+    if options.read:
+        sys_name = platform.system()
+        if 'Darwin' == sys_name:
+            call(['say', query])
     else:
         print()
 
@@ -181,6 +186,10 @@ if __name__ == "__main__":
                         action="store_true",
                         default=False,
                         help="print URL to speech audio.")
+    parser.add_argument('-r', '--read',
+                        action="store_true",
+                        default=False,
+                        help="read out the word.")
     parser.add_argument('-x', '--selection',
                         action="store_true",
                         default=False,

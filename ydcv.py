@@ -4,11 +4,13 @@ from __future__ import print_function
 from argparse import ArgumentParser
 from subprocess import check_output
 from subprocess import call
+from subprocess import Popen
 from time import sleep
 import json
 import re
 import sys
 import platform
+import os
 
 try:
     # Py3
@@ -70,6 +72,13 @@ class Colorizing(object):
             return s
 
 
+def whereis(program):
+    for path in os.environ.get('PATH', '').split(':'):
+        if os.path.exists(os.path.join(path, program)) and \
+           not os.path.isdir(os.path.join(path, program)):
+            return os.path.join(path, program)
+    return None
+
 def online_resources(query):
 
     english = re.compile('^[a-z]+$', re.IGNORECASE)
@@ -123,11 +132,6 @@ def print_explanation(data, options):
         has_result = True
         print(_c('\n  Translation:', 'cyan'))
         print(*map("     * {0}".format, _d['translation']), sep='\n')
-        # read out the word
-    if options.read:
-        sys_name = platform.system()
-        if 'Darwin' == sys_name:
-            call(['say', query])
     else:
         print()
 
@@ -150,6 +154,17 @@ def print_explanation(data, options):
             print(_c('\n  Online Resource:', 'cyan'))
             res = ol_res if options.full else ol_res[:1]
             print(*map(('     * ' + _c('{0}', 'underline')).format, res), sep='\n')
+        # read out the word
+        if options.read:
+            sys_name = platform.system()
+            if 'Darwin' == sys_name:
+                call(['say', query])
+            elif 'Linux' == sys_name:
+                if whereis('festival'):
+                    Popen('echo ' + query + ' | festival --tts', shell=True)
+                else:
+                    print(_c(' -- Please Install festival(http://www.cstr.ed.ac.uk/projects/festival/).','red'))
+
 
     if not has_result:
         print(_c(' -- No result for this query.', 'red'))
@@ -189,7 +204,7 @@ if __name__ == "__main__":
     parser.add_argument('-r', '--read',
                         action="store_true",
                         default=False,
-                        help="read out the word.")
+                        help="read out the word, use festival on Linux.")
     parser.add_argument('-x', '--selection',
                         action="store_true",
                         default=False,

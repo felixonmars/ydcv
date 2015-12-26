@@ -3,10 +3,14 @@ from __future__ import unicode_literals
 from __future__ import print_function
 from argparse import ArgumentParser
 from subprocess import check_output
+from subprocess import call
+from subprocess import Popen
 from time import sleep
+from distutils import spawn
 import json
 import re
 import sys
+import platform
 
 try:
     # Py3
@@ -112,13 +116,11 @@ def print_explanation(data, options):
             elif 'speech' in _b:
                 print("     *", _b['speech'])
             print()
-
         if 'explains' in _b:
             print(_c('  Word Explanation:', 'cyan'))
             print(*map("     * {0}".format, _b['explains']), sep='\n')
         else:
             print()
-
     elif 'translation' in _d:
         has_result = True
         print(_c('\n  Translation:', 'cyan'))
@@ -145,6 +147,16 @@ def print_explanation(data, options):
             print(_c('\n  Online Resource:', 'cyan'))
             res = ol_res if options.full else ol_res[:1]
             print(*map(('     * ' + _c('{0}', 'underline')).format, res), sep='\n')
+        # read out the word
+        if options.read:
+            sys_name = platform.system()
+            if 'Darwin' == sys_name:
+                call(['say', query])
+            elif 'Linux' == sys_name:
+                if spawn.find_executable('festival'):
+                    Popen('echo ' + query + ' | festival --tts', shell=True)
+                else:
+                    print(_c(' -- Please Install festival(http://www.cstr.ed.ac.uk/projects/festival/).', 'red'))
 
     if not has_result:
         print(_c(' -- No result for this query.', 'red'))
@@ -181,6 +193,10 @@ if __name__ == "__main__":
                         action="store_true",
                         default=False,
                         help="print URL to speech audio.")
+    parser.add_argument('-r', '--read',
+                        action="store_true",
+                        default=False,
+                        help="read out the word, use festival on Linux.")
     parser.add_argument('-x', '--selection',
                         action="store_true",
                         default=False,

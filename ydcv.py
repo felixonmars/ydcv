@@ -6,11 +6,11 @@ from subprocess import check_output
 from subprocess import call
 from subprocess import Popen
 from time import sleep
+from distutils import spawn
 import json
 import re
 import sys
 import platform
-import os
 
 try:
     # Py3
@@ -71,13 +71,6 @@ class Colorizing(object):
         else:
             return s
 
-
-def whereis(program):
-    for path in os.environ.get('PATH', '').split(':'):
-        if os.path.exists(os.path.join(path, program)) and \
-           not os.path.isdir(os.path.join(path, program)):
-            return os.path.join(path, program)
-    return None
 
 def online_resources(query):
 
@@ -160,11 +153,10 @@ def print_explanation(data, options):
             if 'Darwin' == sys_name:
                 call(['say', query])
             elif 'Linux' == sys_name:
-                if whereis('festival'):
+                if spawn.find_executable('festival'):
                     Popen('echo ' + query + ' | festival --tts', shell=True)
                 else:
-                    print(_c(' -- Please Install festival(http://www.cstr.ed.ac.uk/projects/festival/).','red'))
-
+                    print(_c(' -- Please Install festival(http://www.cstr.ed.ac.uk/projects/festival/).', 'red'))
 
     if not has_result:
         print(_c(' -- No result for this query.', 'red'))

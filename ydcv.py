@@ -100,13 +100,16 @@ def print_explanation(data, options):
         has_result = True
         _b = _d['basic']
 
-        if 'uk-phonetic' in _b and 'us-phonetic' in _b:
-            print(" UK: [{0}]".format(_c(_b['uk-phonetic'], 'yellow')), end=',')
-            print(" US: [{0}]".format(_c(_b['us-phonetic'], 'yellow')))
-        elif 'phonetic' in _b:
-            print(" [{0}]".format(_c(_b['phonetic'], 'yellow')))
-        else:
-            print()
+        try:
+            if 'uk-phonetic' in _b and 'us-phonetic' in _b:
+                print(" UK: [{0}]".format(_c(_b['uk-phonetic'], 'yellow')), end=',')
+                print(" US: [{0}]".format(_c(_b['us-phonetic'], 'yellow')))
+            elif 'phonetic' in _b:
+                print(" [{0}]".format(_c(_b['phonetic'], 'yellow')))
+            else:
+                print()
+        except UnicodeEncodeError:
+            print(" [ ---- ] ")
 
         if options.speech and 'speech' in _b:
             print(_c('  Text to Speech:', 'cyan'))
@@ -116,6 +119,7 @@ def print_explanation(data, options):
             elif 'speech' in _b:
                 print("     *", _b['speech'])
             print()
+
         if 'explains' in _b:
             print(_c('  Word Explanation:', 'cyan'))
             print(*map("     * {0}".format, _b['explains']), sep='\n')

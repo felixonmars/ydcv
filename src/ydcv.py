@@ -28,6 +28,22 @@ API = "YouDaoCV"
 API_KEY = "659600698"
 
 
+class GlobalOptions(object):
+    def __init__(self, options=None):
+        self._options = options
+
+    def __getattr__(self, name):
+        if name in dir(GlobalOptions) or name in self.__dict__:
+            return getattr(self, name)
+        elif name in self._options.__dict__:
+            return getattr(self._options, name)
+        else:
+            raise AttributeError("'%s' has no attribute '%s'" % (
+                self.__class__.__name__, name))
+
+options = GlobalOptions()
+
+
 class Colorizing(object):
     colors = {
         'none': "",
@@ -181,7 +197,7 @@ def lookup_word(word):
         print_explanation(json.loads(data), options)
 
 
-if __name__ == "__main__":
+def arg_parse():
     parser = ArgumentParser(description="Youdao Console Version")
     parser.add_argument('-f', '--full',
                         action="store_true",
@@ -213,8 +229,11 @@ if __name__ == "__main__":
     parser.add_argument('words',
                         nargs='*',
                         help="words to lookup, or quoted sentences to translate.")
+    return parser.parse_args()
 
-    options = parser.parse_args()
+
+def main():
+    options._options = arg_parse()
 
     if options.words:
         for word in options.words:
@@ -253,3 +272,6 @@ if __name__ == "__main__":
                 except EOFError:
                     break
         print("\nBye")
+
+if __name__ == "__main__":
+    main()

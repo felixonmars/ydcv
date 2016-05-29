@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+
+#import block begins
 from __future__ import unicode_literals
 from __future__ import print_function
 from argparse import ArgumentParser
@@ -22,15 +24,17 @@ except ImportError:
     from urllib2 import urlopen
     reload(sys)
     sys.setdefaultencoding('utf8')
-
+#import block ends
 
 API = "YouDaoCV"
 API_KEY = "659600698"
 
-
+# Colorizing class begins
 class Colorizing(object):
+    # a dictionary for colors matching name ofcolor and value of RGB
     colors = {
         'none': "",
+
         'default': "\033[0m",
         'bold': "\033[1m",
         'underline': "\033[4m",
@@ -60,6 +64,7 @@ class Colorizing(object):
     }
 
     @classmethod
+    # colorize method begins
     def colorize(cls, s, color=None):
         if options.color == 'never':
             return s
@@ -70,13 +75,18 @@ class Colorizing(object):
                 cls.colors[color], s, cls.colors['default'])
         else:
             return s
+    # colorize method ends
 
-
+# colorzing class ends
+# online_resources method begines
+# parameter: query (the word of string that you want to query)
+# return: list of URLs with query, if the query is not Chinses or English, it will return empty list
 def online_resources(query):
-
+    # regular expressions to match Chinese or English from input
     english = re.compile('^[a-z]+$', re.IGNORECASE)
     chinese = re.compile('^[\u4e00-\u9fff]+$', re.UNICODE)
 
+    # resource list storing URLs to search, including Chinese and English
     res_list = [
         (english, 'http://www.ldoceonline.com/search/?q={0}'),
         (english, 'http://dictionary.reference.com/browse/{0}'),
@@ -84,11 +94,16 @@ def online_resources(query):
         (chinese, 'http://www.zdic.net/sousuo/?q={0}')
     ]
 
+    # return list of URLs with quary part for search, or  empty list if not match
     return [url.format(quote(query.encode('utf-8')))
             for lang, url in res_list if lang.match(query) is not None]
+# online_resources method ends
 
-
+# print_explanation method begins
+# parameters: data: JSON object from server
+#          options: Options from input in commmand line
 def print_explanation(data, options):
+    # init local varibles
     _c = Colorizing.colorize
     _d = data
     has_result = False
@@ -96,6 +111,7 @@ def print_explanation(data, options):
     query = _d['query']
     print(_c(query, 'underline'), end='')
 
+    # if basic attribution exists in dictionary
     if 'basic' in _d:
         has_result = True
         _b = _d['basic']
@@ -167,59 +183,83 @@ def print_explanation(data, options):
 
     print()
 
-
+# look_word method begins
 def lookup_word(word):
     word = quote(word)
     try:
+        # send request to youdao server to get response as json
         data = urlopen(
             "http://fanyi.youdao.com/openapi.do?keyfrom={0}&"
             "key={1}&type=data&doctype=json&version=1.2&q={2}"
             .format(API, API_KEY, word)).read().decode("utf-8")
+            
     except IOError:
         print("Network is unavailable")
     else:
         print_explanation(json.loads(data), options)
+# look_word method ends
 
-
+# main method begins
 if __name__ == "__main__":
+    # define parser object to parse the command line parameters
     parser = ArgumentParser(description="Youdao Console Version")
+
+    # command with -f or --full options to get full explanation
     parser.add_argument('-f', '--full',
                         action="store_true",
                         default=False,
                         help="print full web reference, only the first 3 "
                              "results will be printed without this flag.")
+
+    # command with -s or simple options to get simple explainations
     parser.add_argument('-s', '--simple',
                         action="store_true",
                         default=False,
                         help="only show explainations. "
                              "argument \"-f\" will not take effect.")
+
+    # command with -S or --speech options to get URLs of pronunciation
     parser.add_argument('-S', '--speech',
                         action="store_true",
                         default=False,
                         help="print URL to speech audio.")
+
+    # command with -r or --read options to speech out the word
     parser.add_argument('-r', '--read',
                         action="store_true",
                         default=False,
                         help="read out the word, use festival on Linux.")
+
+    # command with -x ro --selection option
     parser.add_argument('-x', '--selection',
                         action="store_true",
                         default=False,
                         help="show explaination of current selection.")
+
+    # command with --color option to colorize the output
     parser.add_argument('--color',
                         choices=['always', 'auto', 'never'],
                         default='auto',
                         help="colorize the output. "
                              "Default to 'auto' or can be 'never' or 'always'.")
+
+    # command with word paramenter to search world
     parser.add_argument('words',
                         nargs='*',
                         help="words to lookup, or quoted sentences to translate.")
 
+    # get command line parse result
     options = parser.parse_args()
 
+    # if command line is with word parameter
     if options.words:
+        # process words as parameters one by one
         for word in options.words:
             lookup_word(word)
+
+    # if command line is without word parameters
     else:
+        # if command line includes selections
         if options.selection:
             last = check_output(["xclip", "-o"], universal_newlines=True)
             print("Waiting for selection>")
@@ -232,24 +272,48 @@ if __name__ == "__main__":
                         if last.strip():
                             lookup_word(last)
                         print("Waiting for selection>")
+                # catch Keyboard interrupt (ctrl + C or delete) or EOFError (ctrl + D) and exit
                 except (KeyboardInterrupt, EOFError):
                     break
+
+        # if command line dosen't include selections
         else:
+            # import block begins
             try:
                 import readline
             except ImportError:
                 pass
+            # import block ends
+
+            # infinit loop
             while True:
                 try:
+                    # if python3
                     if sys.version_info[0] == 3:
+                        # wait for user input
                         words = input('> ')
+                    # if python2
                     else:
+                        # wait for user input
                         words = raw_input('> ')
+
+                    # strip the words as list from input
                     if words.strip():
+                        # look up words
                         lookup_word(words)
+
+                # catch keyboard interrupt (Ctrl + C or Delete)
                 except KeyboardInterrupt:
+                    # new line
                     print()
+                    # new round
                     continue
+
+                # catch EOF Error (Ctrl + D)
                 except EOFError:
+                    # jump out of loop
                     break
+
+        # say bye
         print("\nBye")
+# main method ends

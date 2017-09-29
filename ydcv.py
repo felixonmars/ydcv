@@ -239,7 +239,7 @@ def match_history(parameter):
                 order = "DESC"
             curs.execute(
                 "SELECT * FROM Word ORDER BY addtime {} LIMIT {}".format(order,
-                                                                         num))
+                                                                         abs(num)))
         else:
             curs.execute("SELECT * FROM Word")
         res = curs.fetchall()

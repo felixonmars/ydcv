@@ -256,7 +256,7 @@ def show_history(res):
     """ show history words on the screen
     """
     for word, addtime in res:
-        print("\t" + word + "\t" + addtime)
+        print('|' + word.ljust(20) + '|' + addtime.center(20) + '|')
 
 
 def init_db():

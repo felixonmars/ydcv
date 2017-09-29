@@ -11,6 +11,10 @@ import json
 import re
 import sys
 import platform
+import os
+import sqlite3
+
+from termcolor import colored
 
 try:
     # Py3
@@ -23,6 +27,17 @@ except ImportError:
     reload(sys)
     sys.setdefaultencoding('utf8')
 
+DEFAULT_PATH = os.path.join(os.path.expanduser('~'), '.ydcv')
+
+CREATE_TABLE_WORD = '''
+CREATE TABLE IF NOT EXISTS Word
+(
+name     TEXT PRIMARY KEY,
+content  TEXT,
+resource TEXT
+addtime  TIMESTAMP NOT NULL DEFAULT (DATETIME('NOW', 'LOCALTIME'))
+)
+'''
 
 API = "YouDaoCV"
 API_KEY = "659600698"
@@ -132,6 +147,7 @@ def print_explanation(data, options):
     else:
         print()
 
+    resource = None
     if options.simple is False:
         # Web reference
         if 'web' in _d:
@@ -149,8 +165,8 @@ def print_explanation(data, options):
         ol_res = online_resources(query)
         if len(ol_res) > 0:
             print(_c('\n  Online Resource:', 'cyan'))
-            res = ol_res if options.full else ol_res[:1]
-            print(*map(('     * ' + _c('{0}', 'underline')).format, res), sep='\n')
+            resource = ol_res if options.full else ol_res[:1]
+            print(*map(('     * ' + _c('{0}', 'underline')).format, resource), sep='\n')
         # read out the word
         if options.read:
             sys_name = platform.system()
@@ -165,7 +181,7 @@ def print_explanation(data, options):
     if not has_result:
         print(_c(' -- No result for this query.', 'red'))
 
-    print()
+    return json.dumps(data, ensure_ascii=False), json.dumps(resource) if resource else ""
 
 
 def lookup_word(word):
@@ -178,7 +194,46 @@ def lookup_word(word):
     except IOError:
         print("Network is unavailable")
     else:
-        print_explanation(json.loads(data), options)
+        return print_explanation(json.loads(data), options)
+
+def add_word(word):
+    '''add the word or phrase to database.'''
+
+    conn = sqlite3.connect(os.path.join(DEFAULT_PATH, 'word.db'))
+    curs = conn.cursor()
+    curs.execute('SELECT content FROM Word WHERE name = "%s"' % word)
+    res = curs.fetchall()
+    if res:
+        print(colored(word + ' 在数据库中已存在，不需要添加', 'white', 'on_red'))
+        sys.exit()
+
+    try:
+        content, resource = lookup_word(word)
+        curs.execute('insert into word(name, content, resource) values ("%s", "%s", "%s")' % (
+            word, content, resource))
+    except Exception as e:
+        print(colored('something\'s wrong, you can\'t add the word', 'white', 'on_red'))
+        print(e)
+    else:
+        conn.commit()
+        print(colored('%s has been inserted into database' % word, 'green'))
+    finally:
+        curs.close()
+        conn.close()
+
+def init_db():
+    """ init database
+    """
+    if not os.path.exists(os.path.join(DEFAULT_PATH, 'word.db')):
+        os.mkdir(DEFAULT_PATH)
+        with open(os.path.join(DEFAULT_PATH, 'word_list.txt'), 'w') as f:
+            pass
+        conn = sqlite3.connect(os.path.join(DEFAULT_PATH, 'word.db'))
+        curs = conn.cursor()
+        curs.execute(CREATE_TABLE_WORD)
+        conn.commit()
+        curs.close()
+        conn.close()
 
 
 if __name__ == "__main__":
@@ -213,13 +268,18 @@ if __name__ == "__main__":
     parser.add_argument('words',
                         nargs='*',
                         help="words to lookup, or quoted sentences to translate.")
+    parser.add_argument("--init",
+                        help="")
 
     options = parser.parse_args()
 
     if options.words:
+        init_db()
         for word in options.words:
             lookup_word(word)
+            add_word(word)
     else:
+        init_db()
         if options.selection:
             last = check_output(["xclip", "-o"], universal_newlines=True)
             print("Waiting for selection>")
@@ -231,6 +291,7 @@ if __name__ == "__main__":
                         last = curr
                         if last.strip():
                             lookup_word(last)
+                            add_word(last)
                         print("Waiting for selection>")
                 except (KeyboardInterrupt, EOFError):
                     break

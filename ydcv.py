@@ -33,8 +33,6 @@ CREATE_TABLE_WORD = '''
 CREATE TABLE IF NOT EXISTS Word
 (
 name     TEXT PRIMARY KEY,
-content  TEXT,
-resource TEXT
 addtime  TIMESTAMP NOT NULL DEFAULT (DATETIME('NOW', 'LOCALTIME'))
 )
 '''
@@ -148,6 +146,7 @@ def print_explanation(data, options):
         print()
 
     resource = None
+    web = None
     if options.simple is False:
         # Web reference
         if 'web' in _d:
@@ -181,7 +180,8 @@ def print_explanation(data, options):
     if not has_result:
         print(_c(' -- No result for this query.', 'red'))
 
-    return json.dumps(data, ensure_ascii=False), json.dumps(resource) if resource else ""
+    return json.dumps(data, ensure_ascii=False) if web else '', \
+           json.dumps(resource) if resource else ''
 
 
 def lookup_word(word):
@@ -208,9 +208,9 @@ def add_word(word):
         sys.exit()
 
     try:
-        content, resource = lookup_word(word)
-        curs.execute('insert into word(name, content, resource) values ("%s", "%s", "%s")' % (
-            word, content, resource))
+        curs.execute(
+            "insert into word(name) values ('{}')"
+                .format(word))
     except Exception as e:
         print(colored('something\'s wrong, you can\'t add the word', 'white', 'on_red'))
         print(e)

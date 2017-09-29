@@ -229,7 +229,7 @@ def match_history(parameter):
     """
     conn = sqlite3.connect(os.path.join(DEFAULT_PATH, 'word.db'))
     curs = conn.cursor()
-    if parameter.isdigit():
+    try:
         # parameter is a number
         num = int(parameter)
         if num != 0:
@@ -244,7 +244,7 @@ def match_history(parameter):
             curs.execute("SELECT * FROM Word")
         res = curs.fetchall()
 
-    else:
+    except ValueError:
         date = parameter
         curs.execute(
             "SELECT * FROM Word WHERE addtime LIKE '{}%'".format(date))

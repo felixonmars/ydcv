@@ -11,6 +11,10 @@ import json
 import re
 import sys
 import platform
+import os
+import sqlite3
+
+from termcolor import colored
 
 try:
     # Py3
@@ -20,9 +24,19 @@ except ImportError:
     # Py 2.7
     from urllib import quote
     from urllib2 import urlopen
+
     reload(sys)
     sys.setdefaultencoding('utf8')
 
+DEFAULT_PATH = os.path.join(os.path.expanduser('~'), '.ydcv')
+
+CREATE_TABLE_WORD = '''
+CREATE TABLE IF NOT EXISTS Word
+(
+name     TEXT PRIMARY KEY,
+addtime  TIMESTAMP NOT NULL DEFAULT (DATETIME('NOW', 'LOCALTIME'))
+)
+'''
 
 API = "YouDaoCV"
 API_KEY = "659600698"
@@ -73,7 +87,6 @@ class Colorizing(object):
 
 
 def online_resources(query):
-
     english = re.compile('^[a-z]+$', re.IGNORECASE)
     chinese = re.compile('^[\u4e00-\u9fff]+$', re.UNICODE)
 
@@ -102,7 +115,8 @@ def print_explanation(data, options):
 
         try:
             if 'uk-phonetic' in _b and 'us-phonetic' in _b:
-                print(" UK: [{0}]".format(_c(_b['uk-phonetic'], 'yellow')), end=',')
+                print(" UK: [{0}]".format(_c(_b['uk-phonetic'], 'yellow')),
+                      end=',')
                 print(" US: [{0}]".format(_c(_b['us-phonetic'], 'yellow')))
             elif 'phonetic' in _b:
                 print(" [{0}]".format(_c(_b['phonetic'], 'yellow')))
@@ -132,6 +146,8 @@ def print_explanation(data, options):
     else:
         print()
 
+    resource = None
+    web = None
     if options.simple is False:
         # Web reference
         if 'web' in _d:
@@ -149,8 +165,9 @@ def print_explanation(data, options):
         ol_res = online_resources(query)
         if len(ol_res) > 0:
             print(_c('\n  Online Resource:', 'cyan'))
-            res = ol_res if options.full else ol_res[:1]
-            print(*map(('     * ' + _c('{0}', 'underline')).format, res), sep='\n')
+            resource = ol_res if options.full else ol_res[:1]
+            print(*map(('     * ' + _c('{0}', 'underline')).format, resource),
+                  sep='\n')
         # read out the word
         if options.read:
             sys_name = platform.system()
@@ -160,12 +177,15 @@ def print_explanation(data, options):
                 if spawn.find_executable('festival'):
                     Popen('echo ' + query + ' | festival --tts', shell=True)
                 else:
-                    print(_c(' -- Please Install festival(http://www.cstr.ed.ac.uk/projects/festival/).', 'red'))
+                    print(_c(
+                        ' -- Please Install festival(http://www.cstr.ed.ac.uk/projects/festival/).',
+                        'red'))
 
     if not has_result:
         print(_c(' -- No result for this query.', 'red'))
 
-    print()
+    return json.dumps(data, ensure_ascii=False) if web else '', \
+           json.dumps(resource) if resource else ''
 
 
 def lookup_word(word):
@@ -174,11 +194,84 @@ def lookup_word(word):
         data = urlopen(
             "http://fanyi.youdao.com/openapi.do?keyfrom={0}&"
             "key={1}&type=data&doctype=json&version=1.2&q={2}"
-            .format(API, API_KEY, word)).read().decode("utf-8")
+                .format(API, API_KEY, word)).read().decode("utf-8")
     except IOError:
         print("Network is unavailable")
     else:
-        print_explanation(json.loads(data), options)
+        return print_explanation(json.loads(data), options)
+
+
+def add_word(word):
+    '''add the word or phrase to database.'''
+
+    conn = sqlite3.connect(os.path.join(DEFAULT_PATH, 'word.db'))
+    curs = conn.cursor()
+    curs.execute('SELECT name FROM Word WHERE name = "%s"' % word)
+    res = curs.fetchall()
+    if res:
+        sys.exit()
+
+    try:
+        curs.execute('insert into word(name) values ("{}")'.format(word))
+    except Exception as e:
+        print(colored('something\'s wrong, you can\'t add the word', 'white',
+                      'on_red'))
+        print(e)
+    else:
+        conn.commit()
+    finally:
+        curs.close()
+        conn.close()
+
+
+def match_history(parameter):
+    """ match history words
+    """
+    conn = sqlite3.connect(os.path.join(DEFAULT_PATH, 'word.db'))
+    curs = conn.cursor()
+    try:
+        # parameter is a number
+        num = int(parameter)
+        if num != 0:
+            if num < 0:
+                order = "ASC"
+            else:
+                order = "DESC"
+            curs.execute(
+                "SELECT * FROM Word ORDER BY addtime {} LIMIT {}".format(order,
+                                                                         abs(num)))
+        else:
+            curs.execute("SELECT * FROM Word")
+        res = curs.fetchall()
+
+    except ValueError:
+        date = parameter
+        curs.execute(
+            "SELECT * FROM Word WHERE addtime LIKE '{}%'".format(date))
+        res = curs.fetchall()
+    return res
+
+
+def show_history(res):
+    """ show history words on the screen
+    """
+    for word, addtime in res:
+        print('|' + word.ljust(20) + '|' + addtime.center(20) + '|')
+
+
+def init_db():
+    """ init database
+    """
+    if not os.path.exists(os.path.join(DEFAULT_PATH, 'word.db')):
+        os.mkdir(DEFAULT_PATH)
+        with open(os.path.join(DEFAULT_PATH, 'word_list.txt'), 'w') as f:
+            pass
+        conn = sqlite3.connect(os.path.join(DEFAULT_PATH, 'word.db'))
+        curs = conn.cursor()
+        curs.execute(CREATE_TABLE_WORD)
+        conn.commit()
+        curs.close()
+        conn.close()
 
 
 if __name__ == "__main__":
@@ -205,6 +298,8 @@ if __name__ == "__main__":
                         action="store_true",
                         default=False,
                         help="show explaination of current selection.")
+    parser.add_argument("-H", "--history",
+                        help="show history words. ")
     parser.add_argument('--color',
                         choices=['always', 'auto', 'never'],
                         default='auto',
@@ -217,23 +312,39 @@ if __name__ == "__main__":
     options = parser.parse_args()
 
     if options.words:
+        init_db()
         for word in options.words:
-            lookup_word(word)
+            if '"' in word:
+                print("Non-compliant word!")
+            else:
+                lookup_word(word)
+                add_word(word)
     else:
+        init_db()
         if options.selection:
             last = check_output(["xclip", "-o"], universal_newlines=True)
             print("Waiting for selection>")
             while True:
                 try:
                     sleep(0.1)
-                    curr = check_output(["xclip", "-o"], universal_newlines=True)
+                    curr = check_output(["xclip", "-o"],
+                                        universal_newlines=True)
                     if curr != last:
                         last = curr
                         if last.strip():
                             lookup_word(last)
+                            add_word(last)
                         print("Waiting for selection>")
                 except (KeyboardInterrupt, EOFError):
                     break
+        elif options.history:
+            print("Print words history: ")
+            ret = match_history(options.history)
+            if ret:
+                show_history(ret)
+            else:
+                print("Did not find historical data! ")
+
         else:
             try:
                 import readline
@@ -246,7 +357,11 @@ if __name__ == "__main__":
                     else:
                         words = raw_input('> ')
                     if words.strip():
-                        lookup_word(words)
+                        if '"' in words:
+                            print("Non-compliant word!")
+                        else:
+                            lookup_word(words)
+                            add_word(words)
                 except KeyboardInterrupt:
                     print()
                     continue

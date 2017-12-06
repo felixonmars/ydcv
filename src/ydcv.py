@@ -7,6 +7,7 @@ from subprocess import call
 from subprocess import Popen
 from time import sleep
 from distutils import spawn
+from uuid import uuid1
 import json
 import re
 import sys
@@ -108,6 +109,7 @@ def print_explanation(data, options):
     _c = Colorizing.colorize
     _d = data
     has_result = False
+    _accent_urls = dict()
 
     query = _d['query']
     print(_c(query, 'underline'), end='')
@@ -134,6 +136,9 @@ def print_explanation(data, options):
                 print("     * US:", _b['us-speech'])
             elif 'speech' in _b:
                 print("     *", _b['speech'])
+            for _accent in ('speech', 'uk-speech', 'us-speech'):
+                if _accent in _b:
+                    _accent_urls.update({_accent.split('-')[0]: _b[_accent]})
             print()
 
         if 'explains' in _b:
@@ -169,14 +174,41 @@ def print_explanation(data, options):
             print(*map(('     * ' + _c('{0}', 'underline')).format, res), sep='\n')
         # read out the word
         if options.read:
+            print()
             sys_name = platform.system()
             if 'Darwin' == sys_name:
                 call(['say', query])
             elif 'Linux' == sys_name:
-                if spawn.find_executable('festival'):
-                    Popen('echo ' + query + ' | festival --tts', shell=True)
+                if not spawn.find_executable(options.player):
+                    print(_c(' -- Player ' + options.player + ' is not found in system, ', 'red'))
+                    print(_c('    acceptable players are: festival, mpg123 and sox', 'red'))
+                    print(_c(' -- Please install your favourite player: ', 'blue'))
+                    print(_c('    go install festival(http://www.cstr.ed.ac.uk/projects/festival/), '))
+                    print(_c('    or install mpg123(http://www.mpg123.de/), '))
+                    print(_c('    or install SoX(http://sox.sourceforge.net/). '))
                 else:
-                    print(_c(' -- Please Install festival(http://www.cstr.ed.ac.uk/projects/festival/).', 'red'))
+                    if options.player == 'festival':
+                        Popen('echo ' + query + ' | festival --tts', shell=True)
+                    else:
+                        tempdir = '/tmp/ydcv'
+                        accent = options.accent if options.accent != 'auto' else 'speech'
+                        accent_url = _accent_urls.get(accent, '')
+                        if not accent_url:
+                            print(_c(' -- URL to speech audio for accent {} not found.'.format(options.accent), 'red'))
+                            if not options.speech:
+                                print(_c(' -- Maybe you forgot to add -S option?'), 'red')
+                        else:
+                            accent_file = tempdir + '/' + str(uuid1()) + '.mp3'
+                            Popen('[[ ! -d {td} ]] && mkdir {td}'.format(td=tempdir), shell=True)
+                            if call('curl -s "{0}" -o {1}'.format(accent_url, accent_file), shell=True) != 0:
+                                print(_c('Network unavailable or permission error to write file: {}'.format(accent_file), 'red'))
+                            else:
+                                if options.player == 'mpg123':
+                                    call('mpg123 -q ' + accent_file, shell=True)
+                                elif options.player == 'sox':
+                                    call('play -q ' + accent_file, shell=True)
+                                Popen('[[ -f {tf} ]] && rm {tf}'.format(tf=accent_file), shell=True)
+
 
     if not has_result:
         print(_c(' -- No result for this query.', 'red'))
@@ -220,7 +252,20 @@ def arg_parse():
     parser.add_argument('-r', '--read',
                         action="store_true",
                         default=False,
-                        help="read out the word, use festival on Linux.")
+                        help="read out the word with player provided by \"-p\" option.")
+    parser.add_argument('-p', '--player',
+                        choices=['festival', 'mpg123', 'sox'],
+                        default='festival',
+                        help="read out the word with this play."
+                             "Default to 'festival' or can be 'mpg123' or 'sox'."
+                             "-S option is required if player is not festival."
+                        )
+    parser.add_argument('-a', '--accent',
+                        choices=['auto', 'uk', 'us'],
+                        default='auto',
+                        help="set default accent to read the word in. "
+                             "Default to 'auto' or can be 'uk', or 'us'."
+                        )
     parser.add_argument('-x', '--selection',
                         action="store_true",
                         default=False,

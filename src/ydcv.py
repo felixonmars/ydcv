@@ -7,7 +7,7 @@ from subprocess import call
 from subprocess import Popen
 from time import sleep
 from distutils import spawn
-from uuid import uuid1
+from tempfile import NamedTemporaryFile
 import json
 import re
 import sys
@@ -172,6 +172,7 @@ def print_explanation(data, options):
             print(_c('\n  Online Resource:', 'cyan'))
             res = ol_res if options.full else ol_res[:1]
             print(*map(('     * ' + _c('{0}', 'underline')).format, res), sep='\n')
+
         # read out the word
         if options.read:
             print()
@@ -181,16 +182,16 @@ def print_explanation(data, options):
             elif 'Linux' == sys_name:
                 if not spawn.find_executable(options.player):
                     print(_c(' -- Player ' + options.player + ' is not found in system, ', 'red'))
-                    print(_c('    acceptable players are: festival, mpg123 and sox', 'red'))
+                    print(_c('    acceptable players are: festival, mpg123, sox and mpv', 'red'))
                     print(_c(' -- Please install your favourite player: ', 'blue'))
-                    print(_c('    go install festival(http://www.cstr.ed.ac.uk/projects/festival/), '))
-                    print(_c('    or install mpg123(http://www.mpg123.de/), '))
-                    print(_c('    or install SoX(http://sox.sourceforge.net/). '))
+                    print(_c('    - festival (http://www.cstr.ed.ac.uk/projects/festival/),'))
+                    print(_c('    - mpg123 (http://www.mpg123.de/),'))
+                    print(_c('    - SoX (http://sox.sourceforge.net/),'))
+                    print(_c('    - mpv (https://mpv.io).'))
                 else:
                     if options.player == 'festival':
                         Popen('echo ' + query + ' | festival --tts', shell=True)
                     else:
-                        tempdir = '/tmp/ydcv'
                         accent = options.accent if options.accent != 'auto' else 'speech'
                         accent_url = _accent_urls.get(accent, '')
                         if not accent_url:
@@ -198,17 +199,16 @@ def print_explanation(data, options):
                             if not options.speech:
                                 print(_c(' -- Maybe you forgot to add -S option?'), 'red')
                         else:
-                            accent_file = tempdir + '/' + str(uuid1()) + '.mp3'
-                            Popen('[[ ! -d {td} ]] && mkdir {td}'.format(td=tempdir), shell=True)
-                            if call('curl -s "{0}" -o {1}'.format(accent_url, accent_file), shell=True) != 0:
-                                print(_c('Network unavailable or permission error to write file: {}'.format(accent_file), 'red'))
-                            else:
-                                if options.player == 'mpg123':
-                                    call('mpg123 -q ' + accent_file, shell=True)
-                                elif options.player == 'sox':
-                                    call('play -q ' + accent_file, shell=True)
-                                Popen('[[ -f {tf} ]] && rm {tf}'.format(tf=accent_file), shell=True)
-
+                            with NamedTemporaryFile(suffix=".mp3") as accent_file:
+                                if call('curl -s "{0}" -o {1}'.format(accent_url, accent_file.name), shell=True) != 0:
+                                    print(_c('Network unavailable or permission error to write file: {}'.format(accent_file), 'red'))
+                                else:
+                                    if options.player == 'mpg123':
+                                        call('mpg123 -q ' + accent_file.name, shell=True)
+                                    elif options.player == 'sox':
+                                        call('play -q ' + accent_file.name, shell=True)
+                                    elif options.player == 'mpv':
+                                        call('mpv --really-quiet ' + accent_file.name, shell=True)
 
     if not has_result:
         print(_c(' -- No result for this query.', 'red'))
@@ -221,7 +221,7 @@ def lookup_word(word):
     if word == '%5Cq' or word == '%3Aq':
         sys.exit("Thanks for using, goodbye!")
     else:
-        pass        
+        pass
     try:
         data = urlopen(
             "http://fanyi.youdao.com/openapi.do?keyfrom={0}&"
@@ -254,10 +254,10 @@ def arg_parse():
                         default=False,
                         help="read out the word with player provided by \"-p\" option.")
     parser.add_argument('-p', '--player',
-                        choices=['festival', 'mpg123', 'sox'],
+                        choices=['festival', 'mpg123', 'sox', 'mpv'],
                         default='festival',
                         help="read out the word with this play."
-                             "Default to 'festival' or can be 'mpg123' or 'sox'."
+                             "Default to 'festival' or can be 'mpg123', 'sox', 'mpv'."
                              "-S option is required if player is not festival."
                         )
     parser.add_argument('-a', '--accent',

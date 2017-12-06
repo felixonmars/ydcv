@@ -10,7 +10,15 @@ from distutils import spawn
 import json
 import re
 import sys
+import logging
 import platform
+
+# Enable logging
+logging.basicConfig(
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    level=logging.INFO)
+
+logger = logging.getLogger(__name__)
 
 try:
     # Py3
@@ -186,6 +194,10 @@ def print_explanation(data, options):
 
 def lookup_word(word):
     word = quote(word)
+    if word == '%5Cq' or word == '%3Aq':
+        sys.exit("Thanks for using, goodbye!")
+    else:
+        pass        
     try:
         data = urlopen(
             "http://fanyi.youdao.com/openapi.do?keyfrom={0}&"
@@ -241,7 +253,6 @@ def main():
     else:
         if options.selection:
             last = check_output(["xclip", "-o"], universal_newlines=True)
-            print("Waiting for selection>")
             while True:
                 try:
                     sleep(0.1)

@@ -10,15 +10,7 @@ from distutils import spawn
 import json
 import re
 import sys
-import logging
 import platform
-
-# Enable logging
-logging.basicConfig(
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    level=logging.INFO)
-
-logger = logging.getLogger(__name__)
 
 try:
     # Py3

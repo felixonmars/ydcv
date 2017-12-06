@@ -25,7 +25,7 @@ setup(
     use_scm_version=True,
     classifiers=[
         "Development Status :: 4 - Beta",
-        "License :: OSI Approved :: GPL License",
+        "License :: OSI Approved :: GNU General Public License (GPL)",
         "Environment :: Console",
         "Intended Audience :: End Users/Desktop",
         "Natural Language :: English",

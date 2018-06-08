@@ -7,9 +7,9 @@ Simple wrapper for Youdao online translate (Chinese <-> English) service [API](h
 Each word you query will be logged under the `.ydcv_history` in your home directory, and records the number of times each word was queried in descending order.
 For example:
 ```
-hello 5
-你好 3
-world 2
+hello : 5
+你好 : 3
+world : 2
 ...
 ```
 

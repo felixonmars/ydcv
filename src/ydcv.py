@@ -245,7 +245,7 @@ def record_word(word):
     try:
         with open(file, 'r', encoding='utf-8', errors='ignore') as f:
             for line in f.readlines():
-                arr = line.strip('\n').split(' ')
+                arr = line.strip().strip('\n').split(' : ')
                 word_count[arr[0]] = int(arr[1])
     except FileNotFoundError:
         pass
@@ -254,7 +254,7 @@ def record_word(word):
     else:
         word_count[word] = 1
     sorted_key_list = sorted(word_count, key=lambda x: word_count[x], reverse=True)
-    lines = map(lambda x: (x + ' ' + str(word_count[x])) + '\n', sorted_key_list)
+    lines = map(lambda x: (x + ' : ' + str(word_count[x])) + '\n', sorted_key_list)
     with open(file, 'w', encoding='utf-8') as f:
         for line in lines:
             f.write(line)

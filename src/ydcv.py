@@ -230,7 +230,11 @@ def lookup_word(word):
     except IOError:
         print("Network is unavailable")
     else:
-        print_explanation(json.loads(data), options)
+        try:
+            formatted = json.loads(data)
+            print_explanation(formatted, options)
+        except ValueError:
+            print("Cannot parse response data, original response: \n{}".format(data))
 
 
 def arg_parse():

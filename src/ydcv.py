@@ -2,9 +2,8 @@
 from __future__ import unicode_literals
 from __future__ import print_function
 from argparse import ArgumentParser
-from subprocess import check_output
-from subprocess import call
-from subprocess import Popen
+import subprocess
+from subprocess import check_output, call, Popen
 from time import sleep
 from distutils import spawn
 from tempfile import NamedTemporaryFile
@@ -23,6 +22,7 @@ except ImportError:
     from urllib2 import urlopen
     reload(sys)
     sys.setdefaultencoding('utf8')
+    input = raw_input
 
 
 API = "YouDaoCV"
@@ -190,7 +190,9 @@ def print_explanation(data, options):
                     print(_c('    - mpv (https://mpv.io).'))
                 else:
                     if options.player == 'festival':
-                        Popen('echo ' + query + ' | festival --tts', shell=True)
+                        p = Popen(['festival', '--tts'], stdin=subprocess.PIPE)
+                        p.communicate(query.encode('utf-8'))
+                        p.wait()
                     else:
                         accent = options.accent if options.accent != 'auto' else 'speech'
                         accent_url = _accent_urls.get(accent, '')
@@ -198,17 +200,17 @@ def print_explanation(data, options):
                             print(_c(' -- URL to speech audio for accent {} not found.'.format(options.accent), 'red'))
                             if not options.speech:
                                 print(_c(' -- Maybe you forgot to add -S option?'), 'red')
+                        elif options.player == 'mpv':
+                            call(['mpv', '--really-quiet', accent_url])
                         else:
                             with NamedTemporaryFile(suffix=".mp3") as accent_file:
-                                if call('curl -s "{0}" -o {1}'.format(accent_url, accent_file.name), shell=True) != 0:
+                                if call(['curl', '-s', accent_url, '-o', accent_file.name]) != 0:
                                     print(_c('Network unavailable or permission error to write file: {}'.format(accent_file), 'red'))
                                 else:
                                     if options.player == 'mpg123':
-                                        call('mpg123 -q ' + accent_file.name, shell=True)
+                                        call(['mpg123', '-q', accent_file.name])
                                     elif options.player == 'sox':
-                                        call('play -q ' + accent_file.name, shell=True)
-                                    elif options.player == 'mpv':
-                                        call('mpv --really-quiet ' + accent_file.name, shell=True)
+                                        call(['play', '-q', accent_file.name])
 
     if not has_result:
         print(_c(' -- No result for this query.', 'red'))
@@ -308,10 +310,7 @@ def main():
                 pass
             while True:
                 try:
-                    if sys.version_info[0] == 3:
-                        words = input('> ')
-                    else:
-                        words = raw_input('> ')
+                    words = input('> ')
                     if words.strip():
                         lookup_word(words)
                 except KeyboardInterrupt:

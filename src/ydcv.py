@@ -1,6 +1,9 @@
 #!/usr/bin/env python
+
 from __future__ import unicode_literals
 from __future__ import print_function
+
+import os
 from argparse import ArgumentParser
 import subprocess
 from subprocess import check_output, call, Popen
@@ -41,6 +44,7 @@ class GlobalOptions(object):
         else:
             raise AttributeError("'%s' has no attribute '%s'" % (
                 self.__class__.__name__, name))
+
 
 options = GlobalOptions()
 
@@ -219,6 +223,7 @@ def print_explanation(data, options):
 
 
 def lookup_word(word):
+    real_word = word
     word = quote(word)
     if word == '%5Cq' or word == '%3Aq':
         sys.exit("Thanks for using, goodbye!")
@@ -232,7 +237,29 @@ def lookup_word(word):
     except IOError:
         print("Network is unavailable")
     else:
+        record_word(real_word)
         print_explanation(json.loads(data), options)
+
+
+def record_word(word):
+    file = os.path.expanduser('~') + '/.ydcv_history'
+    word_count = {}
+    try:
+        with open(file, 'r', encoding='utf-8', errors='ignore') as f:
+            for line in f.readlines():
+                arr = line.strip().strip('\n').split(' : ')
+                word_count[arr[0]] = int(arr[1])
+    except FileNotFoundError:
+        pass
+    if word in word_count:
+        word_count[word] += 1
+    else:
+        word_count[word] = 1
+    sorted_key_list = sorted(word_count, key=lambda x: word_count[x], reverse=True)
+    lines = map(lambda x: (x + ' : ' + str(word_count[x])) + '\n', sorted_key_list)
+    with open(file, 'w', encoding='utf-8') as f:
+        for line in lines:
+            f.write(line)
 
 
 def arg_parse():
@@ -319,6 +346,7 @@ def main():
                 except EOFError:
                     break
         print("\nBye")
+
 
 if __name__ == "__main__":
     main()

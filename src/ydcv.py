@@ -292,6 +292,7 @@ def main():
     else:
         if options.selection:
             last = check_output(["xclip", "-o"], universal_newlines=True)
+            print("Waiting for selection>")
             while True:
                 try:
                     sleep(0.1)

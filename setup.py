@@ -19,7 +19,7 @@ setup(
     package_dir={'': 'src'},
     py_modules=['ydcv'],
     entry_points={
-        'console_scripts': ['ydcv=ydcv:main'],
+        'console_scripts': ['yd=ydcv:main'],
     },
     setup_requires=setup_requires,
     use_scm_version=True,

@@ -11,6 +11,8 @@ import json
 import re
 import sys
 import platform
+import hashlib
+import random
 
 try:
     # Py3
@@ -24,10 +26,8 @@ except ImportError:
     sys.setdefaultencoding('utf8')
     input = raw_input
 
-
-API = "YouDaoCV"
-API_KEY = "659600698"
-
+YDAPPKEY = "1d9b4cc7c9694745"
+YDSECKEY = "U9IEK5Qc4CMuWGvbsrwBXaeO6KO7xZwJ"
 
 class GlobalOptions(object):
     def __init__(self, options=None):
@@ -111,14 +111,19 @@ def print_explanation(data, options):
     has_result = False
     _accent_urls = dict()
 
+    # query	text	源语言	查询正确时，一定存在
     query = _d['query']
     print(_c(query, 'underline'), end='')
 
+    # basic	text	词义	基本词典,查词时才有
     if 'basic' in _d:
         has_result = True
         _b = _d['basic']
 
         try:
+            # us-phonetic	美式音标，英文查词成功，一定存在
+            # uk-phonetic	英式音标，英文查词成功，一定存在
+            # phonetic	默认音标，默认是英式音标，英文查词成功，一定存在
             if 'uk-phonetic' in _b and 'us-phonetic' in _b:
                 print(" UK: [{0}]".format(_c(_b['uk-phonetic'], 'yellow')), end=',')
                 print(" US: [{0}]".format(_c(_b['us-phonetic'], 'yellow')))
@@ -129,6 +134,8 @@ def print_explanation(data, options):
         except UnicodeEncodeError:
             print(" [ ---- ] ")
 
+        # uk-speech	英式发音，英文查词成功，一定存在
+        # us-speech	美式发音，英文查词成功，一定存在
         if options.speech and 'speech' in _b:
             print(_c('  Text to Speech:', 'cyan'))
             if 'us-speech' in _b and 'uk-speech' in _b:
@@ -141,11 +148,15 @@ def print_explanation(data, options):
                     _accent_urls.update({_accent.split('-')[0]: _b[_accent]})
             print()
 
+        # explains	基本释义
+        # 中文查词的basic字段只包含explains字段。
         if 'explains' in _b:
             print(_c('  Word Explanation:', 'cyan'))
             print(*map("     * {0}".format, _b['explains']), sep='\n')
         else:
             print()
+
+    # translation	text	翻译结果	查询正确时一定存在
     elif 'translation' in _d:
         has_result = True
         print(_c('\n  Translation:', 'cyan'))
@@ -155,6 +166,7 @@ def print_explanation(data, options):
 
     if options.simple is False:
         # Web reference
+        # web	text	词义	网络释义，该结果不一定存在
         if 'web' in _d:
             has_result = True
             print(_c('\n  Web Reference:', 'cyan'))
@@ -219,16 +231,19 @@ def print_explanation(data, options):
 
 
 def lookup_word(word):
-    word = quote(word)
-    if word == '%5Cq' or word == '%3Aq':
+    if word == '\q' or word == ':q':
         sys.exit("Thanks for using, goodbye!")
-    else:
-        pass
+
+    salt = str(random.randint(1, 65536))
+    md5 = hashlib.md5()
+    md5.update("{}{}{}{}".format(YDAPPKEY,word,salt,YDSECKEY).encode('utf-8'))
+    sign = md5.hexdigest()
+    yd_api = "https://openapi.youdao.com/api?" \
+            "appKey={}&q={}&from=auto&to=zh-CHS&salt={}&sign={}".format(
+            YDAPPKEY, quote(word), salt, sign)
+
     try:
-        data = urlopen(
-            "http://fanyi.youdao.com/openapi.do?keyfrom={0}&"
-            "key={1}&type=data&doctype=json&version=1.2&q={2}"
-            .format(API, API_KEY, word)).read().decode("utf-8")
+        data = urlopen(yd_api).read().decode("utf-8")
     except IOError:
         print("Network is unavailable")
     else:

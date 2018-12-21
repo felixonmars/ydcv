@@ -47,6 +47,16 @@ optional arguments:
                         Translate to specific language. Default: zh-CHS
 ```
 
+## 翻译支持的语言列表
+
+`--from` 和 `--to`参数可以指定特定语言之间相互翻译，但只有中文结果有词典内容
+
+|语言|代码|语言|代码|语言|代码|语言|代码|
+|----|----|----|----|----|----|----|----|
+中文|zh-CHS|葡萄牙文|pt  |韩文|ko|德文    |de
+日文|ja    |西班牙文|es  |法文|fr|阿拉伯文|ar
+英文|EN    |越南文  |vi  |俄文|ru|印尼文  |id
+
 ## Installation
 ```
 pip install ydcv

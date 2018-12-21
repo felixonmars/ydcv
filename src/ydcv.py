@@ -33,6 +33,9 @@ class GlobalOptions(object):
     def __init__(self, options=None):
         self._options = options
 
+    def __getitem__(self, name):
+        return self._options.__dict__.get(name)
+
     def __getattr__(self, name):
         if name in dir(GlobalOptions) or name in self.__dict__:
             return getattr(self, name)
@@ -242,8 +245,8 @@ def lookup_word(word):
     md5.update("{}{}{}{}".format(YDAPPKEY,word,salt,YDSECKEY).encode('utf-8'))
     sign = md5.hexdigest()
     yd_api = "https://openapi.youdao.com/api?" \
-            "appKey={}&q={}&from=auto&to={}&salt={}&sign={}".format(
-            YDAPPKEY, quote(word), options.translate, salt, sign)
+            "appKey={}&q={}&from={}&to={}&salt={}&sign={}".format(
+            YDAPPKEY, quote(word), options["from"], options.to, salt, sign)
 
     try:
         data = urlopen(yd_api).read().decode("utf-8")
@@ -299,7 +302,13 @@ def arg_parse():
                         default='auto',
                         help="colorize the output. "
                              "Default to 'auto' or can be 'never' or 'always'.")
-    parser.add_argument('-t', '--translate',
+    parser.add_argument('-F', '--from',
+                        action="store",
+                        choices=["zh-CHS", "ja", "EN", "ko", "fr", "ru", "pt", "es", "vi", "de", "ar", "id"],
+                        default='EN',
+                        help="Translate from specific language. Default: EN")
+
+    parser.add_argument('-t', '--to',
                         action="store",
                         choices=["zh-CHS", "ja", "EN", "ko", "fr", "ru", "pt", "es", "vi", "de", "ar", "id"],
                         default='zh-CHS',

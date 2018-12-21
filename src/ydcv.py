@@ -180,9 +180,12 @@ def print_explanation(data, options):
 
         # Online resources
         ol_res = online_resources(query)
+        if 'webdict' in _d:
+            ol_res.insert(0, _d['webdict']['url'])
+
         if len(ol_res) > 0:
             print(_c('\n  Online Resource:', 'cyan'))
-            res = ol_res if options.full else ol_res[:1]
+            res = ol_res if options.full else ol_res[:2]
             print(*map(('     * ' + _c('{0}', 'underline')).format, res), sep='\n')
 
         # read out the word

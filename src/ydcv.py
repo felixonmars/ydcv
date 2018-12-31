@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# coding=UTF-8
 from __future__ import unicode_literals
 from __future__ import print_function
 from argparse import ArgumentParser

@@ -116,6 +116,11 @@ def print_explanation(data, options):
     _accent_urls = dict()
 
     # query	text	源语言	查询正确时，一定存在
+    if 'query' not in _d:
+        print(_c("Youdao API did not return correct result. errorCode: {}"
+            .format(_d["errorCode"]), 'red'))
+        return
+
     query = _d['query']
     print(_c(query, 'underline'), end='')
 

@@ -93,35 +93,32 @@ class Colorizing(object):
             return s
 
 
+_re_non_english = re.compile(r'[^\w]', re.ASCII)
+_re_english = re.compile('^[a-z]+$', re.IGNORECASE)
+_re_chinese = re.compile('^[\u4e00-\u9fff]+$', re.UNICODE)
+
 def online_resources(query):
 
-    english = re.compile('^[a-z]+$', re.IGNORECASE)
-    chinese = re.compile('^[\u4e00-\u9fff]+$', re.UNICODE)
-
     res_list = [
-        (english, 'http://www.ldoceonline.com/search/?q={0}'),
-        (english, 'http://dictionary.reference.com/browse/{0}'),
-        (english, 'http://www.urbandictionary.com/define.php?term={0}'),
-        (chinese, 'http://www.zdic.net/sousuo/?q={0}')
+        (_re_english, 'http://www.ldoceonline.com/search/?q={0}'),
+        (_re_english, 'http://dictionary.reference.com/browse/{0}'),
+        (_re_english, 'http://www.urbandictionary.com/define.php?term={0}'),
+        (_re_chinese, 'http://www.zdic.net/sousuo/?q={0}')
     ]
 
     return [url.format(quote(query.encode('utf-8')))
             for lang, url in res_list if lang.match(query) is not None]
 
 
-def print_explanation(data, options):
+def print_explanation(orig_word, data, options):
     _c = Colorizing.colorize
     _d = data
     has_result = False
     _accent_urls = dict()
 
-    # query	text	源语言	查询正确时，一定存在
-    if 'query' not in _d:
-        print(_c("Youdao API did not return correct result. errorCode: {}"
-            .format(_d["errorCode"]), 'red'))
-        return
-
-    query = _d['query']
+    # query	text	源语言	查询正确时，一定存在(并不)
+    # 当FROM和TO的值有在{zh-CHS, EN}范围外的时候，小语种翻译不带词汇结构以及'query'字段
+    query = _d.get('query', orig_word)
     print(_c(query, 'underline'), end='')
 
     # basic	text	词义	基本词典,查词时才有
@@ -244,13 +241,23 @@ def lookup_word(word):
     if word == '\q' or word == ':q':
         sys.exit("Thanks for using, goodbye!")
 
+    # 输入语言非英语词汇，使用auto模式。
+    _lang_from = options["from"]
+    _lang_to = options["to"]
+
+    if _re_non_english.match(word) is not None and _lang_from == 'EN':
+        _lang_from = 'auto'
+
+    if _re_chinese.match(word) is not None:
+        _lang_to = 'EN'
+
     salt = str(random.randint(1, 65536))
     md5 = hashlib.md5()
     md5.update("{}{}{}{}".format(YDAPPKEY,word,salt,YDSECKEY).encode('utf-8'))
     sign = md5.hexdigest()
     yd_api = "https://openapi.youdao.com/api?" \
             "appKey={}&q={}&from={}&to={}&salt={}&sign={}".format(
-            YDAPPKEY, quote(word), options["from"], options.to, salt, sign)
+            YDAPPKEY, quote(word), _lang_from, _lang_to, salt, sign)
 
     try:
         data = urlopen(yd_api).read().decode("utf-8")
@@ -259,7 +266,7 @@ def lookup_word(word):
     else:
         try:
             formatted = json.loads(data)
-            print_explanation(formatted, options)
+            print_explanation(word, formatted, options)
         except ValueError:
             print("Cannot parse response data, original response: \n{}".format(data))
 
@@ -310,13 +317,13 @@ def arg_parse():
                         action="store",
                         choices=["zh-CHS", "ja", "EN", "ko", "fr", "ru", "pt", "es", "vi", "de", "ar", "id"],
                         default='EN',
-                        help="Translate from specific language. Default: EN")
+                        help="Translate from specific language. Default: 'EN' for ascii only lookup, 'auto' for non-ascii characters.")
 
     parser.add_argument('-t', '--to',
                         action="store",
                         choices=["zh-CHS", "ja", "EN", "ko", "fr", "ru", "pt", "es", "vi", "de", "ar", "id"],
                         default='zh-CHS',
-                        help="Translate to specific language. Default: zh-CHS")
+                        help="Translate to specific language. Default: zh-CHS for non-chinese characters, EN if Chinese character queried.")
     parser.add_argument('words',
                         nargs='*',
                         help="words to lookup, or quoted sentences to translate.")

@@ -65,16 +65,18 @@ pip install ydcv
 ## Environment
  * Python ( >=2.7, 3.x )
 
-## Similar Projects (based on github search results)
+## Similar Projects on github
+|Lang|Project|Author|
+|----|----|----|
+|Go|[ydgo](https://github.com/boypt/ydgo)|boypt|
+|RUST|[ydcv-rs](https://github.com/farseerfc/ydcv-rs)|farseerfc|
+|RUST|[ydcv-rust](https://github.com/passchaos/ydcv-rust)|passchaos|
+|Powershell|[ydcv.ps1](https://github.com/atupal/ydcv.ps1)|atupal|
+|BASH|[ydcv-bash-version](https://github.com/MasterCsquare/ydcv-bash-version)|MasterCsquare|
+|Perl|[ydcv](https://github.com/JaHIY/ydcv)|JaHIY|
+|C|[cydcv](https://github.com/proudzhu/cydcv)|proudzhu|
+|C++|[ydcv-cpp](https://github.com/proudzhu/ydcv-cpp)|proudzhu|
+|Vim|[ydcv.vim](https://github.com/bennyyip/ydcv.vim)|bennyyip|
+|Erlang|[ydcv-el](https://github.com/zhenglinj/ydcv-el)|zhenglinj|
+|Haskell|[ydcv-hs](https://github.com/proudzhu/ydcv-hs)|proudzhu|
 
- * [RUST](https://github.com/farseerfc/ydcv-rs)
- * [another RUST](https://github.com/passchaos/ydcv-rust)
- * [Go](https://github.com/pentie/ydgo)
- * [Powershell](https://github.com/atupal/ydcv.ps1)
- * [C](https://github.com/proudzhu/cydcv)
- * [Bash](https://github.com/MasterCsquare/ydcv-bash-version)
- * [Perl](https://github.com/JaHIY/ydcv)
- * [C++](https://github.com/proudzhu/ydcv-cpp)
- * [Vim](https://github.com/bennyyip/ydcv.vim)
- * [Erlang](https://github.com/zhenglinj/ydcv-el)
- * [Haskell](https://github.com/proudzhu/ydcv-hs)

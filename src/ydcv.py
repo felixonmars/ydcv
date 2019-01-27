@@ -122,7 +122,7 @@ def print_explanation(orig_word, data, options):
     print(_c(query, 'underline'), end='')
 
     # basic	text	词义	基本词典,查词时才有
-    if 'basic' in _d:
+    if 'basic' in _d and _d['basic'] is not None:
         has_result = True
         _b = _d['basic']
 

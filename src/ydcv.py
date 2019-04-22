@@ -14,6 +14,7 @@ import sys
 import platform
 import hashlib
 import random
+import os
 
 try:
     # Py3
@@ -27,8 +28,8 @@ except ImportError:
     sys.setdefaultencoding('utf8')
     input = raw_input
 
-YDAPPKEY = "1d9b4cc7c9694745"
-YDSECKEY = "U9IEK5Qc4CMuWGvbsrwBXaeO6KO7xZwJ"
+YDAPPKEY = os.getenv('YDCV_YOUDAO_KEY', '1d9b4cc7c9694745')
+YDSECKEY = os.getenv('YDCV_YOUDAO_SEC', 'U9IEK5Qc4CMuWGvbsrwBXaeO6KO7xZwJ')
 
 class GlobalOptions(object):
     def __init__(self, options=None):

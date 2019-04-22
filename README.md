@@ -6,7 +6,7 @@ Simple wrapper for Youdao online translate (Chinese <-> English) service [API](h
 
 不出所料地，自去年底切换到按量收费API后，ydcv的API Key终于被滥用至欠费状态了。作为小众工具，平时每天API调用开支都在0.2元以内，而4月7、8、20日几天，分别突发消费了8.74、8.87、45.71元，API账户已经是欠费状态，本项目正式终止公众服务。
 
-其他用户若要继续使用，请自行前往[有道智云](https://ai.youdao.com)开通“自然语言翻译服务-文本翻译”的应用，并把自己的API Key和Secret填入源码对应位置即可。
+其他用户若要继续使用，请自行前往[有道智云](https://ai.youdao.com)开通“自然语言翻译服务-文本翻译”的应用，并设置到环境变量`YDCV_YOUDAO_KEY`和`YDCV_YOUDAO_SEC`即可。
 
 ## 注意
 

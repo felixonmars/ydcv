@@ -6,14 +6,14 @@ Simple wrapper for Youdao online translate (Chinese <-> English) service [API](h
 
 本工具需要用户申请一个[有道智云](https://ai.youdao.com) API Key配置使用。
 大致步骤为： 翻译实例-创建实例-选"文本翻译"， 我的应用-创建应用-接入方式：API-选择绑定刚才创建的`自然语言翻译服务-文本翻译`实例。
-得到的`应用ID` / `应用密钥`即为本工具的`YDAPPKEY`/`YDSECKEY`。
+得到的`应用ID` / `应用密钥`即为本工具的`YDAPPID`/`YDAPPSEC`。
 
-本工具可通过环境变量`YDCV_YOUDAO_KEY`和`YDCV_YOUDAO_SEC`和ini文件方式配置key。配置文件默认为`~/.ydcv`，也可用`--config`指定。
+本工具可通过环境变量`YDCV_YOUDAO_APPID`和`YDCV_YOUDAO_APPSEC`和ini文件方式配置key。配置文件默认为`~/.ydcv`，也可用`--config`指定。
 配置文件例子：
 ```
 [YDCV]
-YDAPPKEY=123456
-YDSECKEY=abcd1234
+YDAPPID=123456
+YDAPPSEC=abcd1234
 ```
 
 ## Usage

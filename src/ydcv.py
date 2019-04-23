@@ -29,8 +29,8 @@ except ImportError:
     sys.setdefaultencoding('utf8')
     input = raw_input
 
-YDAPPKEY = os.getenv('YDCV_YOUDAO_KEY', '')
-YDSECKEY = os.getenv('YDCV_YOUDAO_SEC', '')
+YDAPPID = os.getenv('YDCV_YOUDAO_APPID', '')
+YDAPPSEC = os.getenv('YDCV_YOUDAO_APPSEC', '')
 
 class GlobalOptions(object):
     def __init__(self, options=None):
@@ -255,11 +255,11 @@ def lookup_word(word):
 
     salt = str(random.randint(1, 65536))
     md5 = hashlib.md5()
-    md5.update("{}{}{}{}".format(YDAPPKEY,word,salt,YDSECKEY).encode('utf-8'))
+    md5.update("{}{}{}{}".format(YDAPPID,word,salt,YDAPPSEC).encode('utf-8'))
     sign = md5.hexdigest()
     yd_api = "https://openapi.youdao.com/api?" \
             "appKey={}&q={}&from={}&to={}&salt={}&sign={}".format(
-            YDAPPKEY, quote(word), _lang_from, _lang_to, salt, sign)
+            YDAPPID, quote(word), _lang_from, _lang_to, salt, sign)
 
     try:
         data = urlopen(yd_api).read().decode("utf-8")
@@ -344,15 +344,15 @@ def arg_parse():
 
 
 def main():
-    global YDAPPKEY, YDSECKEY
+    global YDAPPID, YDAPPSEC
     options._options = arg_parse()
 
-    if YDAPPKEY == "" or YDSECKEY == "":
+    if YDAPPID == "" or YDAPPSEC == "":
         config = configparser.ConfigParser()
         config.read(os.path.expanduser(options.config))
         sec = config["YDCV"]
-        YDAPPKEY = sec["YDAPPKEY"]
-        YDSECKEY = sec["YDSECKEY"]
+        YDAPPID = sec["YDAPPID"]
+        YDAPPSEC = sec["YDAPPSEC"]
 
     if options.words:
         for word in options.words:

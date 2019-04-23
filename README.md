@@ -2,16 +2,19 @@
 
 Simple wrapper for Youdao online translate (Chinese <-> English) service [API](https://ai.youdao.com/docs/doc-trans-api.s#p01), as an alternative to the StarDict Console Version(sdcv).
 
-## 本项目终止公众服务
-
-不出所料地，自去年底切换到按量收费API后，ydcv的API Key终于被滥用至欠费状态了。作为小众工具，平时每天API调用开支都在0.2元以内，而4月7、8、20日几天，分别突发消费了8.74、8.87、45.71元，API账户已经是欠费状态，本项目正式终止公众服务。
-
-其他用户若要继续使用，请自行前往[有道智云](https://ai.youdao.com)开通“自然语言翻译服务-文本翻译”的应用，并设置到环境变量`YDCV_YOUDAO_KEY`和`YDCV_YOUDAO_SEC`即可。
-
 ## 注意
 
-[有道翻译API](http://fanyi.youdao.com/openapi?path=data-mode) 将于 2018-12-31 后停止运行，改由“有道云-有道智云文本翻译” 提供兼容的服务；目前本项目代码已经匹配升级，但是按照文档说法，有道智云API是“按量收费”，目前账户内有100元体验金，具体收费计算方式尚不明确，项目工具的用户量不明确，而又本项目开源，所用服务标识的ID/SECRET也可能被他人使用，因而此后本项目功能存在不确定性。
+本工具需要用户申请一个[有道智云](https://ai.youdao.com) API Key配置使用。
+大致步骤为： 翻译实例-创建实例-选"文本翻译"， 我的应用-创建应用-接入方式：API-选择绑定刚才创建的`自然语言翻译服务-文本翻译`实例。
+得到的`应用ID` / `应用密钥`即为本工具的`YDAPPKEY`/`YDSECKEY`。
 
+本工具可通过环境变量`YDCV_YOUDAO_KEY`和`YDCV_YOUDAO_SEC`和ini文件方式配置key。配置文件默认为`~/.ydcv`，也可用`--config`指定。
+配置文件例子：
+```
+[YDCV]
+YDAPPKEY=123456
+YDSECKEY=abcd1234
+```
 
 ## Usage
 ```

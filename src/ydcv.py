@@ -15,6 +15,7 @@ import platform
 import hashlib
 import random
 import os
+import configparser
 
 try:
     # Py3
@@ -28,8 +29,8 @@ except ImportError:
     sys.setdefaultencoding('utf8')
     input = raw_input
 
-YDAPPKEY = os.getenv('YDCV_YOUDAO_KEY', '1d9b4cc7c9694745')
-YDSECKEY = os.getenv('YDCV_YOUDAO_SEC', 'U9IEK5Qc4CMuWGvbsrwBXaeO6KO7xZwJ')
+YDAPPKEY = os.getenv('YDCV_YOUDAO_KEY', '')
+YDSECKEY = os.getenv('YDCV_YOUDAO_SEC', '')
 
 class GlobalOptions(object):
     def __init__(self, options=None):
@@ -267,6 +268,12 @@ def lookup_word(word):
     else:
         try:
             formatted = json.loads(data)
+            err_code = formatted["errorCode"]
+            if err_code != "0":
+                print("Req: {}\n ErrorCode {}".format(yd_api, err_code))
+                print("Please refer to: http://ai.youdao.com/docs/doc-trans-api.s#p08")
+                return
+
             print_explanation(word, formatted, options)
         except ValueError:
             print("Cannot parse response data, original response: \n{}".format(data))
@@ -324,7 +331,12 @@ def arg_parse():
                         action="store",
                         choices=["zh-CHS", "ja", "EN", "ko", "fr", "ru", "pt", "es", "vi", "de", "ar", "id"],
                         default='zh-CHS',
-                        help="Translate to specific language. Default: zh-CHS for non-chinese characters, EN if Chinese character queried.")
+                        help="Translate to specific language. "
+                        "Default: zh-CHS for non-chinese characters, EN if Chinese character queried.")
+    parser.add_argument('-c', '--config',
+                        action="store",
+                        default="~/.ydcv",
+                        help="Config file contains API AppKey / SecKey. Default: ~/.ydcv")
     parser.add_argument('words',
                         nargs='*',
                         help="words to lookup, or quoted sentences to translate.")
@@ -332,7 +344,15 @@ def arg_parse():
 
 
 def main():
+    global YDAPPKEY, YDSECKEY
     options._options = arg_parse()
+
+    if YDAPPKEY == "" or YDSECKEY == "":
+        config = configparser.ConfigParser()
+        config.read(os.path.expanduser(options.config))
+        sec = config["YDCV"]
+        YDAPPKEY = sec["YDAPPKEY"]
+        YDSECKEY = sec["YDSECKEY"]
 
     if options.words:
         for word in options.words:

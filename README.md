@@ -4,7 +4,7 @@ Simple wrapper for Youdao online translate (Chinese <-> English) service [API](h
 
 ## 注意
 
-本工具需要用户申请一个[有道智云](https://ai.youdao.com) API Key配置使用。
+本工具已经停止公共服务。用户若要继续使用，需申请一个私人的[有道智云](https://ai.youdao.com) API Key配置使用。
 大致步骤为： 翻译实例-创建实例-选"文本翻译"， 我的应用-创建应用-接入方式：API-选择绑定刚才创建的`自然语言翻译服务-文本翻译`实例。
 得到的`应用ID` / `应用密钥`即为本工具的`YDAPPID`/`YDAPPSEC`。
 

@@ -350,7 +350,12 @@ def main():
     if YDAPPID == "" or YDAPPSEC == "":
         config = configparser.ConfigParser()
         config.read(os.path.expanduser(options.config))
-        sec = config["YDCV"]
+        try:
+            sec = config["YDCV"]
+        except KeyError:
+            print("Cannot find the API key.")
+            print("Please refer to: https://github.com/felixonmars/ydcv#%E6%B3%A8%E6%84%8F")
+            sys.exit()
         YDAPPID = sec["YDAPPID"]
         YDAPPSEC = sec["YDAPPSEC"]
 

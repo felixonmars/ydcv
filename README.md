@@ -53,6 +53,9 @@ optional arguments:
                         Translate from specific language. Default: EN
   -t {zh-CHS,ja,EN,ko,fr,ru,pt,es,vi,de,ar,id}, --to {zh-CHS,ja,EN,ko,fr,ru,pt,es,vi,de,ar,id}
                         Translate to specific language. Default: zh-CHS
+  -c CONFIG, --config CONFIG
+                        Config file contains API AppKey / SecKey. Default: ~/.ydcv
+          
 ```
 
 ## 翻译支持的语言列表

@@ -289,7 +289,7 @@ def arg_parse():
     parser.add_argument('-s', '--simple',
                         action="store_true",
                         default=False,
-                        help="only show explainations. "
+                        help="only show explanations. "
                              "argument \"-f\" will not take effect.")
     parser.add_argument('-S', '--speech',
                         action="store_true",
@@ -315,7 +315,7 @@ def arg_parse():
     parser.add_argument('-x', '--selection',
                         action="store_true",
                         default=False,
-                        help="show explaination of current selection.")
+                        help="show explanation of current selection.")
     parser.add_argument('--color',
                         choices=['always', 'auto', 'never'],
                         default='auto',

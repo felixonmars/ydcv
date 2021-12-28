@@ -23,6 +23,7 @@ setup(
     },
     setup_requires=setup_requires,
     use_scm_version=True,
+    install_requires=['platformdirs'],
     classifiers=[
         "Development Status :: 4 - Beta",
         "License :: OSI Approved :: GNU General Public License (GPL)",

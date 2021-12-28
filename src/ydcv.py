@@ -16,6 +16,10 @@ import hashlib
 import random
 import os
 import configparser
+from platformdirs import PlatformDirs
+
+dirs = PlatformDirs('ydcv')
+DEFAULT_CONFIG = os.path.join(dirs.user_config_dir, 'ydcv.ini')
 
 try:
     # Py3
@@ -335,8 +339,8 @@ def arg_parse():
                         "Default: zh-CHS for non-chinese characters, EN if Chinese character queried.")
     parser.add_argument('-c', '--config',
                         action="store",
-                        default="~/.ydcv",
-                        help="Config file contains API AppKey / SecKey. Default: ~/.ydcv")
+                        default=DEFAULT_CONFIG,
+                        help=f"Config file contains API AppKey / SecKey. Default: {DEFAULT_CONFIG}")
     parser.add_argument('words',
                         nargs='*',
                         help="words to lookup, or quoted sentences to translate.")

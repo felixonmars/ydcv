@@ -6,10 +6,10 @@ from argparse import ArgumentParser
 import subprocess
 from subprocess import check_output, call, Popen
 from time import sleep
-from distutils import spawn
 from tempfile import NamedTemporaryFile
 import json
 import re
+import shutil
 import sys
 import platform
 import hashlib
@@ -201,7 +201,7 @@ def print_explanation(orig_word, data, options):
             if 'Darwin' == sys_name:
                 call(['say', query])
             elif 'Linux' == sys_name:
-                if not spawn.find_executable(options.player):
+                if not shutil.which(options.player):
                     print(_c(' -- Player ' + options.player + ' is not found in system, ', 'red'))
                     print(_c('    acceptable players are: festival, mpg123, sox and mpv', 'red'))
                     print(_c(' -- Please install your favourite player: ', 'blue'))

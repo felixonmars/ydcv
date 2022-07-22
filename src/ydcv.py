@@ -7,6 +7,7 @@ import subprocess
 from subprocess import check_output, call, Popen
 from time import sleep
 from tempfile import NamedTemporaryFile
+from pathlib import Path
 import json
 import re
 import shutil
@@ -15,8 +16,14 @@ import sys
 import platform
 import hashlib
 import random
+import atexit
 import os
 import configparser
+from contextlib import suppress
+
+
+with suppress(ImportError):
+    import readline
 
 try:
     # Py3
@@ -338,6 +345,10 @@ def arg_parse():
                         action="store",
                         default="~/.ydcv",
                         help="Config file contains API AppKey / SecKey. Default: ~/.ydcv")
+    parser.add_argument('--history',
+                        action="store",
+                        default="~/.ydcv_history.txt",
+                        help="History file. Default: ~/.ydcv_history.txt")
     parser.add_argument('words',
                         nargs='*',
                         help="words to lookup, or quoted sentences to translate.")
@@ -360,9 +371,18 @@ def main():
         YDAPPID = sec["YDAPPID"]
         YDAPPSEC = sec["YDAPPSEC"]
 
+    path = os.path.expanduser(options._options.history)
+    Path(path).touch()
+    # for --history=/dev/null
+    with suppress(ImportError):
+        with suppress(OSError):
+            readline.read_history_file(path)
+        atexit.register(readline.write_history_file, path)
     if options.words:
         for word in options.words:
             lookup_word(word)
+            with suppress(ImportError):
+                readline.add_history(word)
     else:
         if options.selection:
             from shutil import which
@@ -393,10 +413,6 @@ def main():
                 except (KeyboardInterrupt, EOFError):
                     break
         else:
-            try:
-                import readline
-            except ImportError:
-                pass
             while True:
                 try:
                     words = input('> ')

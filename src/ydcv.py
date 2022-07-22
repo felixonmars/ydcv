@@ -10,6 +10,7 @@ from tempfile import NamedTemporaryFile
 import json
 import re
 import shutil
+from shutil import which
 import sys
 import platform
 import hashlib
@@ -364,12 +365,26 @@ def main():
             lookup_word(word)
     else:
         if options.selection:
-            last = check_output(["xclip", "-o"], universal_newlines=True)
+            from shutil import which
+            from shlex import split
+            # don't use try/catch to call these program, it will cost more time
+            # than judge existence of these program by `which()`
+            if options._options.cmd:
+                cmd = split(options._options.cmd)
+            elif which("xsel"):
+                cmd = split("xsel -o")
+            elif which("xclip"):
+                cmd = split("xclip -o")
+                # TODO: add more clipboard tool: windows' clip, cygwin's
+                # putclip, nvim's win32yank, etc
+            else:
+                sys.exit("Please install xsel/xclip first!")
+            last = check_output(cmd, universal_newlines=True)
             print("Waiting for selection>")
             while True:
                 try:
                     sleep(0.1)
-                    curr = check_output(["xclip", "-o"], universal_newlines=True)
+                    curr = check_output(cmd, universal_newlines=True)
                     if curr != last:
                         last = curr
                         if last.strip():

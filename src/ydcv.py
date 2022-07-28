@@ -379,16 +379,15 @@ def main():
                 # putclip, nvim's win32yank, etc
             else:
                 sys.exit("Please install xsel/xclip first!")
-            last = check_output(cmd, universal_newlines=True)
+            last = check_output(cmd, universal_newlines=True).replace("-\n", "").replace("\n", ' ').strip()
             print("Waiting for selection>")
             while True:
                 try:
                     sleep(0.1)
-                    curr = check_output(cmd, universal_newlines=True)
-                    if curr != last:
+                    curr = check_output(cmd, universal_newlines=True).replace("-\n", "").replace("\n", ' ').strip()
+                    if curr != last and curr:
+                        lookup_word(curr)
                         last = curr
-                        if last.strip():
-                            lookup_word(last)
                         print("Waiting for selection>")
                 except (KeyboardInterrupt, EOFError):
                     break
@@ -399,8 +398,8 @@ def main():
                 pass
             while True:
                 try:
-                    words = input('> ')
-                    if words.strip():
+                    words = input('> ').replace("-\n", "").replace("\n", ' ').strip()
+                    if words:
                         lookup_word(words)
                 except KeyboardInterrupt:
                     print()

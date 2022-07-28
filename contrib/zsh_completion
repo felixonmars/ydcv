@@ -25,7 +25,6 @@ ydcv_opts_commands=(
     '(-h --help)'{-h,--help}'[show this help message and exit]'
     '--color[colorize the output. Default to "auto" or can be "never" or "always".]'
     '(-s --simple)'{-s,--simple}'[only show explainations. argument "-f" will not take effect]'
-    '(-x --selection)'{-x,--selection}'[show explaination of current selection.]'
 )
 
 case "${words[CURRENT - 1]}" in

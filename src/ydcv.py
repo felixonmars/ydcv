@@ -7,6 +7,10 @@ import subprocess
 from subprocess import check_output, call, Popen
 from time import sleep
 from tempfile import NamedTemporaryFile
+from pathlib import Path
+from shutil import which
+from shlex import split
+from multiprocessing.dummy import Process
 import json
 import re
 import shutil
@@ -32,6 +36,7 @@ except ImportError:
 
 YDAPPID = os.getenv('YDCV_YOUDAO_APPID', '')
 YDAPPSEC = os.getenv('YDCV_YOUDAO_APPSEC', '')
+stop = False
 
 class GlobalOptions(object):
     def __init__(self, options=None):
@@ -280,6 +285,44 @@ def lookup_word(word):
             print("Cannot parse response data, original response: \n{}".format(data))
 
 
+def lookup_selection(cmd):
+    global stop
+    # don't use try/catch to call these program, it will cost more time
+    # than judge existence of these program by `which()`
+    if cmd:
+        cmd = split(cmd)
+    elif which("xsel"):
+        cmd = split("xsel -o")
+    elif which("xclip"):
+        cmd = split("xclip -o")
+        # TODO: add more clipboard tool: windows' clip, cygwin's
+        # putclip, nvim's win32yank, etc
+    else:
+        sys.exit("Please install xsel/xclip first!")
+    last = (
+        check_output(cmd, universal_newlines=True)
+        .replace("-\n", "")
+        .replace("\n", " ")
+        .strip()
+    )
+    while not stop:
+        try:
+            sleep(0.1)
+            curr = (
+                check_output(cmd, universal_newlines=True)
+                .replace("-\n", "")
+                .replace("\n", " ")
+                .strip()
+            )
+            if curr != last and curr:
+                lookup_word(curr)
+                last = curr
+                # FIXME: will output an unnecessary empty line
+                print("> ", end=None)
+        except (KeyboardInterrupt, EOFError):
+            break
+
+
 def arg_parse():
     parser = ArgumentParser(description="Youdao Console Version")
     parser.add_argument('-f', '--full',
@@ -313,10 +356,9 @@ def arg_parse():
                         help="set default accent to read the word in. "
                              "Default to 'auto' or can be 'uk', or 'us'."
                         )
-    parser.add_argument('-x', '--selection',
-                        action="store_true",
-                        default=False,
-                        help="show explanation of current selection.")
+    parser.add_argument('--cmd',
+                        action="store",
+                        help="command of selection.")
     parser.add_argument('--color',
                         choices=['always', 'auto', 'never'],
                         default='auto',
@@ -345,7 +387,7 @@ def arg_parse():
 
 
 def main():
-    global YDAPPID, YDAPPSEC
+    global YDAPPID, YDAPPSEC, stop
     options._options = arg_parse()
 
     if YDAPPID == "" or YDAPPSEC == "":
@@ -363,51 +405,28 @@ def main():
     if options.words:
         for word in options.words:
             lookup_word(word)
-    else:
-        if options.selection:
-            from shutil import which
-            from shlex import split
-            # don't use try/catch to call these program, it will cost more time
-            # than judge existence of these program by `which()`
-            if options._options.cmd:
-                cmd = split(options._options.cmd)
-            elif which("xsel"):
-                cmd = split("xsel -o")
-            elif which("xclip"):
-                cmd = split("xclip -o")
-                # TODO: add more clipboard tool: windows' clip, cygwin's
-                # putclip, nvim's win32yank, etc
-            else:
-                sys.exit("Please install xsel/xclip first!")
-            last = check_output(cmd, universal_newlines=True)
-            print("Waiting for selection>")
-            while True:
-                try:
-                    sleep(0.1)
-                    curr = check_output(cmd, universal_newlines=True)
-                    if curr != last:
-                        last = curr
-                        if last.strip():
-                            lookup_word(last)
-                        print("Waiting for selection>")
-                except (KeyboardInterrupt, EOFError):
-                    break
-        else:
-            try:
-                import readline
-            except ImportError:
-                pass
-            while True:
-                try:
-                    words = input('> ')
-                    if words.strip():
-                        lookup_word(words)
-                except KeyboardInterrupt:
-                    print()
-                    continue
-                except EOFError:
-                    break
-        print("\nBye")
+        exit()
+    task = Process(target=lookup_selection, args=(options._options.cmd,))
+    task.start()
+    while True:
+        try:
+            words = (
+                input("> ")
+                .replace("-\n", "")
+                .replace("\n", " ")
+                .strip()
+            )
+            # empty string will raise ErrorCode 113
+            if words:
+                lookup_word(words)
+        except KeyboardInterrupt:
+            # TODO: make the last line gray
+            print("")
+            continue
+        except EOFError:
+            stop = True
+            task.join()
+            break
 
 if __name__ == "__main__":
     main()

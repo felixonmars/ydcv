@@ -369,16 +369,29 @@ def main():
             from shlex import split
             # don't use try/catch to call these program, it will cost more time
             # than judge existence of these program by `which()`
+            # https://github.com/neovim/neovim/blob/ef1d291f29961ae10cc122e92fb2419cbbd29f3b/runtime/autoload/provider/clipboard.vim#L87-L151
             if options._options.cmd:
                 cmd = split(options._options.cmd)
-            elif which("xsel"):
+            elif which("pbpaste"):
+                cmd = split("pbpaste")
+            elif os.getenv("WAYLAND_DISPLAY") and which("wl-paste"):
+                cmd = split("wl-paste --no-newline")
+            elif os.getenv("DISPLAY") and which("xsel"):
                 cmd = split("xsel -o")
-            elif which("xclip"):
+            elif os.getenv("DISPLAY") and which("xclip"):
                 cmd = split("xclip -o")
-                # TODO: add more clipboard tool: windows' clip, cygwin's
-                # putclip, nvim's win32yank, etc
+            elif which("lemonade"):
+                cmd = split("lemonade paste")
+            elif which("doitclient"):
+                cmd = split("doitclient wclip -r")
+            elif which("win32yank"):
+                cmd = split("win32yank -o --lf")
+            elif which("termux-clipboard-get"):
+                cmd = split("termux-clipboard-get")
+            elif which("tmux"):
+                cmd = split("tmux save-buffer -")
             else:
-                sys.exit("Please install xsel/xclip first!")
+                sys.exit("Please install any clipper firstly!")
             last = check_output(cmd, universal_newlines=True)
             print("Waiting for selection>")
             while True:

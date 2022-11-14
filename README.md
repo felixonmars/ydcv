@@ -73,6 +73,15 @@ optional arguments:
 pip install ydcv
 ```
 
+## Shell completion
+
+### zsh
+
+```sh
+scripts/zsh_completion.py
+sudo mv _ydcv /usr/share/zsh/site-functions
+```
+
 ## Environment
  * Python ( >=2.7, 3.x )
 
